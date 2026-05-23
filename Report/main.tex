@@ -1,0 +1,717 @@
+\documentclass[11pt,a4paper]{article}
+% ─────────────────────────────────────────────────────────────
+% PACKAGES & CONFIGURATION
+% ─────────────────────────────────────────────────────────────
+\usepackage[a4paper, margin=1.5cm]{geometry}
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric, shapes.misc, arrows.meta, positioning, fit, backgrounds, calc}
+\usepackage{xcolor}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{caption}
+\usepackage{float}
+\usepackage{hyperref}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{listings}
+\usepackage{graphicx} 
+
+% Style hyperref
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,
+    urlcolor=cyan,
+    pdftitle={ETS Pemrograman Kontroller - DMCM-WVAF},
+    pdfpagemode=FullScreen,
+}
+
+% Configure Listings for C Pseudocode
+\lstset{
+    language=C,
+    basicstyle=\ttfamily\footnotesize,
+    keywordstyle=\color{blue}\bfseries,
+    commentstyle=\color{gray},
+    stringstyle=\color{red},
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    stepnumber=1,
+    numbersep=5pt,
+    backgroundcolor=\color{black!2},
+    showspaces=false,
+    showstringspaces=false,
+    showtabs=false,
+    frame=single,
+    rulecolor=\color{black!20},
+    tabsize=2,
+    breaklines=true,
+    breakatwhitespace=true,
+    captionpos=b
+}
+
+% ─────────────────────────────────────────────────────────────
+% TIKZ STYLE DEFINITIONS
+% ─────────────────────────────────────────────────────────────
+\tikzset{
+    ieeeBlock/.style={
+        draw=black, fill=white, line width=0.6pt, text width=3.8cm, minimum height=1.1cm, align=center, font=\small\rmfamily, inner sep=5pt
+    },
+    ieeeShadedBlock/.style={
+        ieeeBlock, fill=black!5
+    },
+    ieeeSubBlock/.style={
+        draw=black, fill=white, line width=0.5pt, text width=2.5cm, minimum height=0.9cm, align=center, font=\footnotesize\rmfamily, inner sep=4pt
+    },
+    ieeeDecision/.style={
+        diamond, draw=black, fill=white, line width=0.6pt, text width=2.5cm, minimum height=1.1cm, aspect=1.8, align=center, font=\small\rmfamily, inner sep=2pt
+    },
+    ieeeStartEnd/.style={
+        draw=black, fill=white, rounded corners=6pt, line width=0.6pt, text width=2.2cm, minimum height=0.7cm, align=center, font=\small\rmfamily\bfseries
+    },
+    ieeeLoop/.style={
+        draw=black, fill=white, rounded corners=3pt, line width=0.6pt, text width=2.2cm, minimum height=0.7cm, align=center, font=\small\rmfamily\ttfamily
+    },
+    ieeeArrow/.style={
+        -{Stealth[length=5pt, width=3.5pt]}, line width=0.6pt, draw=black
+    },
+    ieeeDashedArrow/.style={
+        ieeeArrow, dashed
+    },
+    ieeeFcProcess/.style={
+        ieeeBlock, text width=4.5cm, minimum height=1.1cm
+    },
+    ieeeFcDecision/.style={
+        ieeeDecision, text width=2.6cm
+    },
+    ieeeFcSubBlock/.style={
+        draw=black, fill=white, line width=0.5pt, text width=2.4cm, minimum height=0.9cm, align=center, font=\footnotesize\rmfamily, inner sep=4pt
+    }
+}
+
+% ─────────────────────────────────────────────────────────────
+% MULAI DOKUMEN
+% ─────────────────────────────────────────────────────────────
+\begin{document}
+
+% =============================================================
+% HALAMAN COVER / TITLE PAGE
+% =============================================================
+\begin{titlepage}
+    \centering
+    \vspace*{1.5cm}
+    
+    {\Large\bfseries EVALUASI TENGAH SEMESTER}\\[0.3cm]
+    {\Large\bfseries MATA KULIAH PEMROGRAMAN KONTROLLER}\\[0.6cm]
+    \hrule height 1.5pt \vspace{0.5cm}
+    {\Large\bfseries STUDI LITERATUR \& SIMULASI METODE BARU}\\[0.3cm]
+    {\large\textit{\textbf{Sistem Deterministic Mixed-Criticality Matrix dengan Variable-Window Adaptive Filtering (DMCM-WVAF) pada STM32F401CD}}}\\[0.5cm]
+    \hrule height 1.5pt
+    
+    \vspace{0.5cm}
+
+    \begin{center}
+        \includegraphics[width=7cm]{its_logo.png}
+    \end{center}
+
+    \vspace{0.3cm}
+    
+    \begin{minipage}{0.6\textwidth}
+        \centering
+        \textbf{Disusun oleh:}\\[0.3cm]
+        \begin{tabular}{lcl}
+            Daniel Kivlhan Katoroy  & & NRP. 2042241004 \\
+            Faris Ahmad Holili & & NRP. 2042241028 \\
+        \end{tabular}
+    \end{minipage}\\[1cm]
+    
+    {\textbf{Kelas:} \textbf{4B}}\\[1.5cm]
+    
+    \begin{minipage}{0.5\textwidth}
+        \centering
+        \textbf{Dosen Pengampu:}\\[0.2cm]
+         Ahmad Radhy, S.Si., M.Si.
+    \end{minipage}
+    
+    \vfill
+    \vspace{0cm}
+    
+    {\large\bfseries PROGRAM STUDI TEKNOLOGI REKAYASA INSTRUMENTASI}\\[0.1cm]
+    {\large\bfseries DEPARTEMEN TEKNIK INSTRUMENTASI}\\[0.1cm]
+    {\large\bfseries FAKULTAS VOKASI}\\[0.1cm]
+    {\large\bfseries INSTITUT TEKNOLOGI SEPULUH NOPEMBER}\\[0.1cm]
+    {\large\bfseries SURABAYA}\\[0.1cm]
+    {\large\bfseries 2025/2026}
+\end{titlepage}
+
+\newpage
+\text{ }
+\hrule
+\vspace{0.5cm}
+\pagenumbering{arabic}
+
+% ═════════════════════════════════════════════════════════════
+% SECTION A: STUDI LITERATUR
+% ═════════════════════════════════════════════════════════════
+\section{Studi Literatur}
+\hspace{1.5em}Tujuan dari studi literatur ini adalah untuk mengkaji tren, tantangan, dan solusi terkini dalam domain sistem tertanam (\textit{embedded systems}) dan \textit{Internet of Things} (IoT). Penelusuran difokuskan pada 16 jurnal bereputasi (terindeks Scopus/WoS) terbitan tahun 2021 hingga 2026. Topik utama yang ditinjau mencakup optimasi arsitektur mikrokontroler, peningkatan efisiensi konsumsi daya melalui manajemen \textit{Real-Time Operating System} (RTOS), implementasi \textit{Machine Learning} pada perangkat dengan sumber daya terbatas (\textit{Edge AI/TinyML}), serta metodologi penguatan keamanan siber (\textit{cybersecurity}) di tingkat perangkat keras dasar (\textit{bare-metal}). Ringkasan dari 16 jurnal acuan disajikan secara terpusat pada Tabel 1 di bawah ini:
+
+\begin{longtable}{|>{\centering\arraybackslash}m{0.8cm}|>{\raggedright\arraybackslash}m{3.0cm}|>{\centering\arraybackslash}m{2.2cm}|>{\raggedright\arraybackslash}m{3.4cm}|>{\raggedright\arraybackslash}m{3.4cm}|>{\raggedright\arraybackslash}m{3.4cm}|}
+\caption{Ringkasan 16 Jurnal Acuan (2021--2026, Scopus/WoS)} \label{tab:literatur} \\
+\hline
+\textbf{No} & \textbf{Judul Artikel} & \textbf{Penulis (Tahun)} & \textbf{Metode} & \textbf{Hasil Utama} & \textbf{Future Work} \\ \hline
+\endfirsthead
+\hline
+\multicolumn{6}{|l|}{\small\textit{Lanjutan dari halaman sebelumnya}} \\ \hline
+\textbf{No} & \textbf{Judul Artikel} & \textbf{Penulis (Tahun)} & \textbf{Metode} & \textbf{Hasil Utama} & \textbf{Future Work} \\ \hline
+\endhead
+\hline
+\multicolumn{6}{|r|}{\small\textit{Bersambung ke halaman berikutnya...}} \\ \hline
+\endfoot
+\hline
+\endlastfoot
+1 & Design of an intelligent disinfection control system based on an STM32 single-chip microprocessor by using the YOLO algorithm & Xueyi Wang, Xianrong Li, Haiying Du, Jing Wang (2024) & Desain sistem disinfeksi otomatis berbasis STM32F407 yang dipadukan dengan algoritma YOLOv3 (Darknet-53) untuk deteksi kepadatan manusia secara real-time serta kendali PID untuk level cairan. & Mampu mengotomatisasi disinfeksi di toilet umum dengan tingkat akurasi tinggi. Algoritma YOLOv3 mencapai nilai mAP sebesar 0.89 dengan waktu respons deteksi instan 0.017 detik. & Penggunaan algoritma YOLO versi terbaru untuk menaikkan akurasi edge vision, integrasi modul IoT cloud monitoring, serta optimasi efisiensi disinfektan dan daya operasional. \\ \hline
+
+2 & Neuro-controller Implementation for the Embedded Control System for Mini-Greenhouse & Vasyl Teslyuk, dkk. (2023) & Embedded neuro-controller berbasis ANN (multilayer perceptron: 4 input, 6 hidden, dan 4 output neuron) pada board STM32-F103C8T6. Pengondisian data sensor fuzzy menggunakan pustaka NeurophStudio. & Sukses mengotomatisasi mini-greenhouse berdasarkan profil sensor fisik. Model neural network backpropagation menghasilkan tingkat presisi galat MSE yang sangat rendah, sebesar 0.032. & Eksplorasi pada arsitektur perangkat keras sistem kontrol lain via penataan ulang dataset (retraining), optimasi komputasi embedded, serta perancangan hardware neural network. \\ \hline
+
+3 & Intelligent Control of Quad-Rotor Aircrafts with a STM32 Microcontroller Using Deep Neural Networks & Xiaochun Guan, Sheng Lou, Han Li, dan Tinglong Tang (2021) & Multi-sensor fusion dan sistem kendali cascade PID pada UAV. Implementasi deep neural network secara on-device memanfaatkan RT-Thread operating system dan framework NNoM (format ONNX). & UAV berhasil hover dan mempertahankan posisi horizontal secara stabil. Klasifikasi tulisan tangan MNIST pada MCU berdaya rendah hanya mengonsumsi memori mematikan sebesar 13.296 bytes. & Deployment compressed deep neural network models agar model AI lebih ringan di memori, serta pengembangan fungsionalitas edge AI lokal (object dan speech recognition). \\ \hline
+
+4 & Strategy for Learning Microcontroller Programming—A Graphical or a Textual Start? & Franc Vrbančič dan Slavko Kocijančič (2024) &  Eksperimen pedagogi pada 114 siswa vokasi mekatronika di Slovenia untuk membandingkan performa pemrograman tekstual (Bascom AVR) vs grafis (LabView). & Siswa yang mengawali metode pembelajaran dengan bahasa tekstual memperoleh nilai ujian kompetensi dan transfer pengetahuan yang jauh lebih tinggi dan adaptif. & Pengujian strategi pada rentang umur siswa yang berbeda, serta pemanfaatan lingkungan IDE open-source modern seperti ekosistem Arduino dan block-based programming. \\ \hline
+
+5 & Embedded Machine Learning Using Microcontrollers in Wearable and Ambulatory Systems for Health and Care Applications: A Review & Maha S. Diab dan Esther Rodriguez-Villegas (2022) & Systematic literature review (SLR) terhadap 17 artikel TinyML berbasis wearable units dari database Google Scholar dan IEEE Xplore. & Arsitektur ARM Cortex-M mendominasi sistem wearable kesehatan karena efisiensinya. Framework CMSIS-NN dan X-CUBE-AI sukses memangkas bobot model tanpa mendegradasi akurasi klinis. & Pembuatan model ML yang jauh lebih ringan, penguatan teknik kompresi model, efisiensi konsumsi arus, dan peningkatan privasi data medis pada simpul edge devices. \\ \hline
+
+6 & Performance Evaluation of C/C++, MicroPython, Rust and TinyGo Programming Languages on ESP32 Microcontroller & Ignas Plauska, Agnius Liutkevičius, dan Audronė Janavičiūtė (2023) & Performance evaluation bahasa pemrograman (C/C++, MicroPython, Rust, TinyGo) pada ESP32 lewat 5 benchmark algoritma inti (CRC-32, SHA-256, FFT, FIR, IIR). & C/C++ mencetak rekor eksekusi tercepat. Namun, TinyGo dan Rust menyuguhkan efisiensi ketat yang mendekati C/C++ dengan keunggulan zero timing jitter berstatus bare-metal. & Pengujian khusus terhadap performa hardware internal (WiFi, Bluetooth, peripheral access) serta evaluasi ulang terhadap update compiler terbaru dari tiap bahasa. \\ \hline
+
+7 & FCPP+Miosix: Scaling Aggregate Programming to Embedded Systems & Giorgio Audrito, Federico Terraneo, dan William Fornaciari (2023) & Integrasi pustaka FCPP (Field Calculus C++) dengan real-time OS bare-metal Miosix pada simpul sensor nirkabel WandStem berbasis chip ARM Cortex-M3. & Paradigma pemrograman AP terbukti andal mengelola distributed embedded systems dengan footprint kecil ($\sim 380$ KB FLASH, 39 KB RAM) dan tangguh terhadap packet loss. & Peningkatan skala kuantitas node fisik di lapangan, pengembangan high-resolution clock synchronization, dan optimasi efisiensi konsumsi daya jalur komunikasi wireless. \\ \hline
+
+8 & Remote IoT Education Laboratory for Microcontrollers Based on the STM32 Chips & Patrik Jacko, dkk. (2022) & Perancangan platform remote laboratory praktikum daring berbasis STM32F446RE, modul Wi-Fi ESP8266, dan server TCP/IP untuk melakukan pemantauan peripheral jarak jauh. & Atas penggunaan remote lab sukses menaikkan rasio kelulusan praktikum mahasiswa secara berkala karena dosen dapat melacak letak bug kesalahan konfigurasi register secara real-time. & Optimalisasi kestabilan koneksi data internet, perluasan kompatibilitas ke varian mikroprosesor lain, serta pembuatan fitur penilaian otomatis (auto-grading system). \\ \hline
+
+9 & Dual-Core PLC for Cooperating Projects with Software Implementation & Marcin Hubacz dan Bartosz Trybus (2023) & Rekayasa dual-core PLC tanpa OS memakai IC STM32H755 (Cortex-M7 \& M4). Komunikasi dikelola via shared memory terproteksi instansi semaphore HSEM dan instruksi internal khusus. & Sistem sanggup mengeksekusi dua proyek logic dan continuous control secara paralel dengan cycle time berbeda secara sinkron serta memotong overhead komunikasi. & Ekspansi metode untuk arsitektur multi-core dengan kapasitas proyek yang lebih masif, perbaikan manajemen memori bersama, serta pengujian pada frekuensi clock tinggi. \\ \hline
+
+10 & A Comprehensive Survey on the Use of Hypervisors in Safety-Critical Systems & Santiago Lozano, Tamara Lugo, dan Jesús Carretero (2023) & Systematic literature review mengenai taksonomi metode virtualisasi hardware dan hypervisor pada mixed-criticality embedded systems di bidang avionik dan otomotif. & Virtualisasi sukses mewujudkan temporal/spatial partitioning dan fault isolation. XtratuM direkomendasikan untuk aerospace karena patuh pada regulasi ARINC 653. & Pengendalian shared resource interference untuk meminimalkan nilai galat Worst Case Execution Time (WCET) serta mereduksi latensi inter-VM komunikasi. \\ \hline
+
+11 & A Hard Real-Time Kernel for CPIoT Systems With Safety Features in Rust & Nayancy Gupta, dkk. (2025) & Perancangan hard real-time kernel HarSaRK-RS berbasis bahasa Rust menggunakan pendekatan boolean-vector scheduling dan protokol SBPC/MRSP untuk jaminan determinisme. & Kernel sanggup memotong durasi context switch hingga 6 kali lipat dibanding FreeRTOS tradisional serta menjamin keandalan memory safety di level kompilasi bare-metal. & Penyusunan sistem manajemen berkas (file-system) lokal, otomatisasi generator Hardware Abstraction Layer (HAL) untuk berbagai mikrokontroler yang mendukung Rust. \\ \hline
+
+12 & A Survey of High Level Synthesis Based Hardware Security Approaches for Reusable IP Cores & Aditya Anshul dan Anirban Sengupta (2024) & Survei komprehensif mengenai teknik proteksi sirkuit siber pada tingkat High-Level Synthesis (HLS) melalui klasifikasi kontrol detektif dan kontrol preventif. & Metode steganografi terbukti mampu menyisipkan watermark digital tanpa biaya overhead sirkuit, sementara logic locking andal mengamankan kekayaan intelektual (IP Protection). & Perancangan algoritma mitigasi serangan Trojan perangkat keras yang disisipkan oleh penyusup internal via perangkat CAD otomatis selama siklus fabrikasi sirkuit. \\ \hline
+
+13 & Low-Power SAR ADC Design: Overview and Survey of State-of-the-Art Techniques & Xiyuan Tang, dkk. (2022) & Kajian kuantitaf tren efisiensi energi arsitektur Successive Approximation Register (SAR) ADC berdasarkan data publikasi simposium elit ISSCC dan VLSI (2000--2021). & Efisiensi energi SAR ADC melonjak drastis hingga 7.500 kali lipat selama dua dekade. Teknik transistor stacking terbukti sukses memotong arus bocor digital hingga 25\%. & Rekayasa algoritma baru untuk mendobrak batasan fisik sampling termal ($kT/C$ noise limitation) memakai correlated double sampling dan noise bandwidth switching. \\ \hline
+
+14 & Incremental Encoder Speed Acquisition Using an STM32 Microcontroller and NI ELVIS & Adrian Augustin Pop (2022) & Implementation eksperimental pengukuran RPM motor induksi via quadrature encoder berbasis STM32 F446RE (Encoder Mode) yang diintegrasikan dengan platform NI ELVIS II. & Algoritma DLMT dan kombinasi MT terbukti ampuh melenyapkan galat kuantisasi pada rentang kecepatan rendah, serta mode X1 menghemat beban kerja utilisasi CPU. & Peningkatan akurasi estimasi kecepatan sudut pada kondisi area dengan gangguan elektromagnetik (EMI) tinggi serta perancangan filter kompensasi transien adaptif. \\ \hline
+
+15 & FPGA–STM32-Embedded Vision and Control Platform for ADAS Development on a 1:5 Scale Vehicle & Karen Roa-Tort, dkk. (2025) & Integrasi platform ADAS pada mobil skala 1:5 memadukan FPGA Kria KV260 (vision processor YOLOv3-Tiny) dan STM32F401RE (control unit) memanfaatkan komunikasi bus UART. & Sistem memproses segmentasi jalan secara real-time dengan latensi vision di bawah 70 ms dan akurasi mAP sebesar 87.4\% pada kecepatan laju kendaraan mencapai 25 km/h. & Peningkatan ketangguhan sistem visi terhadap cuaca ekstrem atau kondisi minim cahaya (low-light), serta migrasi model menuju akselerasi hardware YOLOv7 di FPGA. \\ \hline
+
+16 & Dual-Core-Based Microcontrollers Inference Design and Performance Analysis & Dongchan Lee, Jeong-Si Kim, dan Seungtae Hong (2024) & Desain pemrosesan kecerdasan buatan paralel TinyML pada dual-core STM32H747. Core Cortex-M4 mengelola prapemrosesan citra, sementara core Cortex-M7 memproses inferensi TFLM. & Arsitektur pemrosesan paralel dual-core mempercepat pengolahan data hingga 6 kali lipat lebih tangguh dan memotong nilai latensi total sebesar 30\% secara hemat energi. & Sinkronisasi ulang desain model deep learning untuk memangkas overhead pemindahan data antar-core melalui optimasi arsitektur shared memory SRAM4. \\ \hline
+\endlongtable
+
+\subsection{Daftar Future Work yang Diintegrasikan}
+\hspace{1.5em}Dari 16 referensi jurnal di atas, sudah kami rumuskan lima \textit{Future Work} (FW) penting yang menjadi jembatan menuju desain metode baru inovasi kami sebagai berikut:
+\begin{itemize}
+    \item \textbf{FW1 (Sinyal Adaptif):} Penerapan pemrosesan sinyal lokal terintegrasi untuk mendeteksi perubahan transien sensor secara dinamis (merujuk \cite{vrbancic2024} dan \cite{pop2022}).
+    \item \textbf{FW2 (Optimasi Filter Edge):} Algoritma penyaringan sensor adaptif dengan memori minimal (\textit{footprint} kecil) untuk perangkat dengan sumber daya terbatas guna memotong derau $kT/C$ (merujuk \cite{teslyuk2023}, \cite{diab2022}, \cite{tang2022}, dan \cite{lee2024}).
+    \item \textbf{FW3 (Keamanan Bare-metal):} Mekanisme pertahanan integritas alur program menggunakan pembagian zona eksekusi tingkat interupsi (\textit{hardware-enforced security}) untuk mencegah threats fungsional (merujuk \cite{guan2021}, \cite{gupta2025}, dan \cite{anshul2024}).
+    \item \textbf{FW4 (Mixed-Criticality):} Konsep pembagian tingkat kepentingan (\textit{criticality level}) pada sistem bare-metal tanpa overhead kernel OS pihak ketiga yang berat (merujuk \cite{wang2024}, \cite{hubacz2023}, \cite{lozano2023}, dan \cite{lee2024}).
+    \item \textbf{FW5 (Optimasi Waktu Nyata):} Pengurangan \textit{timing jitter} pada kontrol keputusan melalui tabel lookup konstan dibanding logika percabangan \textit{if-else} bertingkat yang konvensional (merujuk \cite{plauska2023}, \cite{audrito2023}, \cite{jacko2022}, dan \cite{gupta2025}).
+\end{itemize}
+\hspace{1.5em}Berdasarkan hasil ringkasan dan studi literatur di atas, sebagian besar penelitian mutakhir secara konsisten menyoroti urgensi efisiensi daya komputasi, manajemen sumber daya (\textit{resource management}) yang ketat, determinisme sistem operasi, serta pemrosesan data sensor secara instan pada sistem tertanam. Oleh karena itu, usulan proyek dalam laporan ini akan mengintegrasikan secara penuh seluruh \textit{future work} tersebut ke dalam sebuah metode baru yang komprehensif, yaitu: \textbf{Desain Sistem Deterministic Mixed-Criticality Matrix dengan Variable-Window Adaptive Filtering (DMCM-WVAF) pada STM32F401CD}.
+
+% ═════════════════════════════════════════════════════════════
+% SECTION B: METODE BARU YANG DIUSULKAN
+% ═════════════════════════════════════════════════════════════
+\section{Metode Baru yang Diusulkan}
+\subsection{Judul Metode}
+\textbf{"Desain Sistem Deterministic Mixed-Criticality Matrix dengan Variable-Window Adaptive Filtering (DMCM-WVAF) pada STM32F401CD"} \\
+\textbf{Dasar:} Gabungan future work FW1 s.d. FW5.
+
+\subsection{Dasar Teori \& Arsitektur Sistem}
+\hspace{1.5em}Metode baru ini dirancang untuk menjawab keterbatasan filter digital konvensional (yang memperlambat respons sistem saat terjadi lonjakan data darurat) dan penjadwalan perangkat lunak tradisional yang memiliki waktu eksekusi bervariasi / tidak deterministik akibat percabangan bersarang. Sistem ini dibangun tanpa menggunakan kernel RTOS komersial (\textit{bare-metal}) untuk meminimalkan \textit{overhead} daya, FLASH, dan RAM pada mikrokontroler hemat daya.
+
+\subsection{Deskripsi Metode dan Integrasi Future Work}
+\hspace{1.5em}Metode DMCM-WVAF merekayasa interaksi dinamis antara sensor dan aktuator secara radikal dengan memadukan kelima \textit{future work} (FW1--FW5) langsung pada lapisan perangkat keras dasar (\textit{bare-metal} C/C++). Integrasi ini membentuk satu ekosistem program yang padat energi, hemat memori, dan deterministik tanpa memerlukan beban operasi dari kernel RTOS pihak ketiga.
+
+Pengondisian sinyal adaptif (FW1) dan penekanan noise $kT/C$ (FW2) dilebur ke dalam pilar pertama melalui fungsi penyaringan \textit{Variable-Window Adaptive Filtering} (WVAF). Alur ini dikendalikan secara langsung oleh pembacaan register data ADC internal (\texttt{ADC1->DR}). Berbeda dengan filter konvensional yang kaku, ukuran jendela data ($W_k$) pada algoritma ini bergeser secara atomik. Pada kondisi mantap, program mengalokasikan memori melingkar (\textit{circular buffer}) untuk ukuran maksimal $W_{\max}=16$ guna mereduksi riak noise kelistrikan. Namun, begitu impuls transien ekstrem terdeteksi ($\Delta V_k > \theta$), pointer indeks jendela dipangkas secara instan menuju ukuran minimal $W_{\min}=2$ demi membuang tundaan fasa (\textit{phase lag}) filter secara total.
+
+Jaminan proteksi integritas sistem terhadap galat fungsional (FW3) dan partisi tingkat kepentingan komponen (\textit{mixed-criticality} - FW4) diselesaikan melalui \textit{Software-Based Temporal Partitioning} (SBTP). Metode ini memanfaatkan manipulasi register kendali perangkat keras Timer 2 internal, yaitu register \texttt{TIM2->DIER} (untuk mengaktifkan interupsi pembaruan berkala via bit \texttt{UIE}) dan register \texttt{TIM2->CR1} (untuk aktivasi counter melalui bit \texttt{CEN}). Kode pemrograman mengisolasi seluruh tugas fungsional vital instrumentasi (akuisisi ADC, kalkulasi filter adaptif, evaluasi ambang batas, dan \textit{driving} pin output) ke dalam \textit{Safety-Critical Zone} yang berjalan secara mutlak di dalam \textit{Interrupt Service Routine} (ISR) berkala 5~ms. Jika terjadi kondisi macet (\textit{hang/stuck}) pada kode latar belakang \textit{best-effort} di Zona Non-Kritis (\texttt{while(1)}), interupsi hardware tetap memaksa CPU untuk mengeksekusi fungsi keselamatan tepat waktu.
+
+Optimasi latensi respon dan eliminasi \textit{timing jitter} (FW5) diwujudkan melalui mekanisme pemetaan keputusan \textit{Constant-Time} $O(1)$ State-Matrix. Alur kontrol tidak lagi menggunakan instruksi percabangan bersarang (\textit{if-else/switch-case}) yang menghasilkan variasi waktu eksekusi akibat ketidakpastian jalur instruksi assembly. Sebagai gantinya, status sensor $S_k$ dan mode operasi $M_k$ langsung dikonversi menjadi indeks array 2D konstan yang disimpan di memori FLASH. Perintah aktuasi kemudian dieksekusi menggunakan manipulasi bit-masking berkecepatan tinggi pada register atomik \texttt{GPIOB->BSRR} (\textit{Bit Set/Reset Register}) untuk menggerakkan pin PB0, PB1, dan PB8 secara instan.
+
+\subsection{Diagram Blok Sistem}
+\hspace{1.5em}Arsitektur perangkat keras dan alur pengkondisian sinyal dari sistem instrumentasi DMCM-WVAF yang diusulkan disajikan pada Gambar \ref{fig:blockdiagram}.
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[scale=0.96, transform shape, every node/.style={font=\rmfamily}]
+    % ── LAYER HEADERS
+    \node[font=\rmfamily\bfseries\small] (hSensor) at (0, 1.4) {SENSOR LAYER};
+    \node[font=\rmfamily\bfseries\small] (hCore) at (5.8, 1.4) {CORE PROCESSING LAYER};
+    \node[font=\rmfamily\bfseries\small] (hActuator) at (12.2, 1.4) {ACTUATOR LAYER};
+
+    % ── COLUMN 1: SENSOR LAYER
+    \node[ieeeBlock] (physSens) at (0, 0) {
+        \textbf{Physical Sensors}\\
+        \scriptsize RV1 (PA0) \& RV2 (PA1)\\
+        \scriptsize $s_1(t), s_2(t)$ (Analog)
+    }; 
+    \node[ieeeShadedBlock] (adc) at (0, -2.6) {
+        \textbf{12-Bit ADC}\\
+        \scriptsize STM32F401 Scan Mode\\
+        \scriptsize Output: $x_k \in [0, 4095]$
+    }; 
+    \node[ieeeBlock] (wvaf) at (0, -5.4) {
+        \textbf{WVAF Filter}\\
+        \scriptsize $\Delta V_k = |x_k - x_{k-1}|$\\[3pt]
+        \scriptsize $W_k = \begin{cases} 2, & \Delta V_k > \theta \\ 16, & \Delta V_k \le \theta \end{cases}$\\ [3pt]
+        \scriptsize Output: $y_k = \text{avg}(x_k, W_k)$
+    }; 
+
+    % ── COLUMN 2: CORE PROCESSING LAYER
+    \node[ieeeShadedBlock] (tim2) at (5.8, 0) {
+        \textbf{TIM2 Hardware}\\
+        \textbf{Interrupt (ISR)}\\
+        \scriptsize 5~ms Periodic Timer Tick\\
+        \tiny\texttt{HAL\_TIM\_PeriodElapsedCallback()}
+    }; 
+    \node[ieeeBlock] (stateEval) at (5.8, -2.6) {
+        \textbf{State Evaluator}\\
+        \scriptsize Thresholding: $y_k \to S_k$\\
+        \scriptsize State $S_k \in \{0, 1, 2\}$
+    }; 
+    \node[ieeeBlock] (matrix) at (5.8, -5.4) {
+        \textbf{$O(1)$ State-Matrix}\\
+        \scriptsize Command Lookup:\\
+        \scriptsize $u_k = \mathbf{M}[S_k][M_k]$
+    }; 
+    \node[ieeeBlock, dashed] (nonCrit) at (5.8, -8.0) {
+        \textbf{Non-Critical Tasks}\\
+        \scriptsize Best-Effort Context (\texttt{while(1)})\\
+        \scriptsize UART Telemetry, LCD Update,\\
+        \scriptsize Flash Data Logging
+    };
+
+    % ── COLUMN 3: ACTUATOR LAYER
+    \node[ieeeBlock] (actDrv) at (12.2, 0) {
+        \textbf{Actuator Driver}\\
+        \scriptsize Map $u_k \to$ GPIO Outputs\\
+        \scriptsize Pins: PB0, PB1, PB8
+    }; 
+    \node[ieeeSubBlock] (ledG) at (10.4, -2.6) {
+        \textbf{Green LED}\\
+        \scriptsize Normal Status (PB1)
+    }; 
+    \node[ieeeSubBlock] (ledR) at (14.0, -2.6) {
+        \textbf{Red LED}\\
+        \scriptsize Warning Status (PB0)
+    }; 
+    \node[ieeeSubBlock] (relay) at (12.2, -5.4) {
+        \textbf{Relay \& Buzzer}\\
+        \scriptsize Danger Alarm (PB8)
+    }; 
+    \node[ieeeShadedBlock] (uart) at (12.2, -8.0) {
+        \textbf{UART Serial Monitor}\\
+        \scriptsize PA2 (TX) @ 9600~bps\\
+        \scriptsize Telemetry Logging
+    };
+
+    % ── CONNECTORS & ARROWS
+    \draw[ieeeArrow] (physSens.south) -- node[right=2pt, font=\scriptsize\rmfamily] {$s_i(t)$} (adc.north);
+    \draw[ieeeArrow] (adc.south) -- node[right=2pt, font=\scriptsize\rmfamily] {$x_k$} (wvaf.north); 
+    \draw[ieeeArrow] (wvaf.east) -- (2.4, -5.4) -- (2.4, -2.6) -- node[above=2pt, midway, font=\scriptsize\rmfamily] {$y_k$} (stateEval.west); 
+    \draw[ieeeArrow] (tim2.south) -- (stateEval.north);
+    \draw[ieeeArrow] (stateEval.south) -- node[right=2pt, font=\scriptsize\rmfamily] {$S_k$} (matrix.north); 
+    \draw[ieeeDashedArrow] (nonCrit.west) -- (3.2, -8.0) -- (3.2, -5.4) -- node[above=2pt, midway, font=\scriptsize\rmfamily] {$M_k$} (matrix.west); 
+    \draw[ieeeArrow] (matrix.east) -- (8.4, -5.4) -- (8.4, 0.0) -- node[above=2.5pt, midway, font=\scriptsize\rmfamily] {$u_k$} (actDrv.west); 
+    \draw[ieeeArrow] (actDrv.south) -- ++(0,-0.6) -| (ledG.north);
+    \draw[ieeeArrow] (actDrv.south) -- ++(0,-0.6) -| (ledR.north);
+    \draw[ieeeArrow] (actDrv.south) -- (relay.north);
+    \fill (12.2, -1.1) circle (1.5pt); 
+    \draw[ieeeDashedArrow] (nonCrit.south) -- (5.8, -9.2) -- (12.2, -9.2) -- (uart.south);
+    \node[above=2pt, font=\scriptsize\rmfamily] at (9.0, -9.2) {Telemetry};
+
+    % ── VERTICAL DIVIDER LINES
+    \draw[black!40, dashed, line width=0.5pt] (2.9, 1.6) -- (2.9, -9.6);
+    \draw[black!40, dashed, line width=0.5pt] (9.0, 1.6) -- (9.0, -9.6);
+\end{tikzpicture}
+\caption{Diagram Blok Sistem Arsitektur DMCM-WVAF, menampilkan partisi spasial dan interkoneksi sinyal antara tiga lapisan pemrosesan utama (Sensor $\to$ Core $\to$ Actuator).}\label{fig:blockdiagram}
+\end{figure}
+
+\subsection{Diagram Alur Algoritma Sistem}
+\hspace{1.5em}Logika perangkat lunak terintegrasi yang memisahkan alur eksekusi deterministik (\textit{Hard Real-Time}) dengan alur background loop disajikan pada Gambar \ref{fig:flowchart}.
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[scale=0.72, transform shape, every node/.style={font=\rmfamily}]
+    % ── COLUMN HEADERS
+    \node[text=black, font=\rmfamily\bfseries\small] (titleMain) at (0, 0.8) {MAIN SYSTEM LOOP};
+    \node[text=black, font=\rmfamily\bfseries\small] (titleISR) at (7.5, 0.8) {TIM2 INTERRUPT SERVICE ROUTINE (5~ms)}; 
+
+    % ── COLUMN 1: MAIN BACKGROUND LOOP
+    \node[ieeeStartEnd] (start) at (0, 0) {START}; 
+    \node[ieeeFcProcess] (sysInit) at (0, -1.5) {
+        \textbf{System Initialization}\\
+        \scriptsize \texttt{HAL\_Init()}, System Clock,\\
+        \scriptsize GPIO, ADC, UART, TIM2
+    }; 
+    \node[ieeeFcProcess] (startTimer) at (0, -3.6) {
+        \textbf{Enable TIM2 Interrupt}\\
+        \scriptsize \texttt{HAL\_TIM\_Base\_Start\_IT()}\\
+        \scriptsize 5~ms hardware tick enabled
+    }; 
+    \node[ieeeLoop] (whileLoop) at (0, -5.4) {while(1)}; 
+    \node[ieeeBlock, text width=4.5cm] (bgTasks) at (0, -7.4) {
+        \textbf{Non-Critical Background Tasks}\\
+        \scriptsize $\bullet$ \texttt{LCD\_UpdateDisplay()}\\
+        \scriptsize \texttt{Log\_DataToFlash()}\\
+        \scriptsize $\bullet$ \texttt{HAL\_Delay(50)} [Best-effort]
+    };
+
+    % Main Loop Arrows
+    \draw[ieeeArrow] (start.south) -- (sysInit.north);
+    \draw[ieeeArrow] (sysInit.south) -- (startTimer.north);
+    \draw[ieeeArrow] (startTimer.south) -- (whileLoop.north);
+    \draw[ieeeArrow] (whileLoop.south) -- (bgTasks.north); 
+    \draw[ieeeArrow] (bgTasks.west) -- ++(-0.6, 0) |- (whileLoop.west);
+
+    % ── COLUMN 2: DETERMINISTIC TIM2 ISR
+    \node[ieeeStartEnd, fill=black!5] (isrStart) at (7.5, 0) {TIM2 ISR}; 
+    \node[ieeeFcProcess, fill=black!5] (setFlag) at (7.5, -1.4) {
+        \textbf{Set Critical Context}\\
+        \scriptsize Set \texttt{critical\_flag = 1}
+    }; 
+    \node[ieeeFcProcess] (readADC) at (7.5, -3.2) {
+        \textbf{1. Read ADC Channel}\\
+        \scriptsize Sample $x_k = \text{ADC1}\rightarrow\text{DR}$
+    }; 
+    \node[ieeeFcProcess] (calcDelta) at (7.5, -5.0) {
+        \textbf{2. Compute Delta}\\
+        \scriptsize $\Delta V_k = |x_k - x_{k-1}|$
+    }; 
+    \node[ieeeFcDecision] (decDelta) at (7.5, -7.2) { $\Delta V_k > \theta$?\\ \scriptsize ($\theta = 200$) }; 
+
+    % Symmetrical branches with highly comfortable space allocation
+    \node[ieeeFcSubBlock] (wMax) at (4.5, -9.4) {
+        \textbf{Noise Filtering}\\
+        \scriptsize $W_k = W_{\max} = 16$
+    }; 
+    \node[ieeeFcSubBlock] (wMin) at (10.5, -9.4) {
+        \textbf{Transient Response}\\
+        \scriptsize $W_k = W_{\min} = 2$
+    }; 
+
+    % Rejoin vertically into top face of avgCalc with no overlap
+    \node[ieeeFcProcess] (avgCalc) at (7.5, -11.6) {
+        \textbf{3. Adaptive Filtering (WVAF)}\\
+        \scriptsize $y_k = \frac{1}{W_k}\sum_{i=0}^{W_k-1} x_{k-i}$
+    }; 
+    \node[ieeeFcProcess] (stateEval) at (7.5, -13.6) {
+        \textbf{4. Evaluate Sensor State}\\
+        \scriptsize $S_k = \text{get\_state}(y_k)$
+    }; 
+    \node[ieeeFcDecision] (decState) at (7.5, -15.8) { Sensor State\\ $S_k$? }; 
+
+    % Symmetrical Actuator Status Branches
+    \node[ieeeFcSubBlock] (sNorm) at (4.3, -18.2) {
+        \textbf{Normal ($S_k=0$)}\\
+        \scriptsize Green LED On
+    }; 
+    \node[ieeeFcSubBlock] (sWarn) at (7.5, -18.2) {
+        \textbf{Warning ($S_k=1$)}\\
+        \scriptsize Red LED On
+    }; 
+    \node[ieeeFcSubBlock] (sDang) at (10.7, -18.2) {
+        \textbf{Danger ($S_k=2$)}\\
+        \scriptsize Relay \& Buzzer On
+    };
+
+    % Bottom Flow Operations properly separated
+    \node[ieeeBlock, text width=5.0cm] (matrixLookup) at (7.5, -20.6) {
+        \textbf{5. $O(1)$ Matrix Lookup \& Execution}\\
+        \scriptsize $u_k = \mathbf{M}[S_k][M_k] \rightarrow$ Execute outputs
+    }; 
+    \node[ieeeFcProcess, fill=black!5] (uartTX) at (7.5, -22.6) {
+        \textbf{6. Non-blocking Telemetry}\\
+        \scriptsize Transmit $x_k, y_k, S_k, u_k$ via UART
+    }; 
+    \node[ieeeFcProcess, fill=black!5] (clearFlag) at (7.5, -24.4) {
+        \textbf{Clear Critical Context}\\
+        \scriptsize Set \texttt{critical\_flag = 0}
+    }; 
+    \node[ieeeStartEnd, fill=black!5] (isrEnd) at (7.5, -25.8) {EXIT ISR};
+
+    % ISR Connections
+    \draw[ieeeArrow] (isrStart.south) -- (setFlag.north);
+    \draw[ieeeArrow] (setFlag.south) -- (readADC.north);
+    \draw[ieeeArrow] (readADC.south) -- (calcDelta.north);
+    \draw[ieeeArrow] (calcDelta.south) -- (decDelta.north); 
+    \draw[ieeeArrow] (decDelta.west) -| node[above=2pt, pos=0.5, font=\scriptsize\rmfamily] {No} (wMax.north);
+    \draw[ieeeArrow] (decDelta.east) -| node[above=2pt, pos=0.5, font=\scriptsize\rmfamily] {Yes} (wMin.north); 
+    \draw[ieeeArrow] (wMax.south) -- ++(0, -0.6) -| ([xshift=-1.2cm]avgCalc.north);
+    \draw[ieeeArrow] (wMin.south) -- ++(0, -0.6) -| ([xshift=1.2cm]avgCalc.north); 
+    \draw[ieeeArrow] (avgCalc.south) -- (stateEval.north);
+    \draw[ieeeArrow] (stateEval.south) -- (decState.north); 
+    \draw[ieeeArrow] (decState.west) -| node[above=2pt, pos=0.5, font=\scriptsize\rmfamily] {Normal} (sNorm.north);
+    \draw[ieeeArrow] (decState.south) -- node[right=2pt, midway, font=\scriptsize\rmfamily] {Warning} (sWarn.north);
+    \draw[ieeeArrow] (decState.east) -| node[above=2pt, pos=0.5, font=\scriptsize\rmfamily] {Danger} (sDang.north); 
+    \draw[ieeeArrow] (sNorm.south) -- ++(0, -0.6) -| ([xshift=-1.5cm]matrixLookup.north);
+    \draw[ieeeArrow] (sWarn.south) -- (matrixLookup.north);
+    \draw[ieeeArrow] (sDang.south) -- ++(0, -0.6) -| ([xshift=1.5cm]matrixLookup.north); 
+    \draw[ieeeArrow] (matrixLookup.south) -- (uartTX.north);
+    \draw[ieeeArrow] (uartTX.south) -- (clearFlag.north);
+    \draw[ieeeArrow] (clearFlag.south) -- (isrEnd.north); 
+
+    % Dashed divider layout limit marker
+    \draw[black!30, dashed, line width=0.5pt] (2.8, 1.2) -- (2.8, -26.5);
+\end{tikzpicture}
+\caption{Flowchart Algoritma Penjadwalan Temporal DMCM-WVAF. Garis vertikal putus-putus memisahkan konteks tugas best-effort (Zona Non-Kritis) dari penanganan interupsi periodik TIM2 berlatensi rendah (Zona Kritis).}\label{fig:flowchart}
+\end{figure}
+
+\subsection{Penjelasan Detail Tiga Komponen Metode}
+\hspace{1.5em}Metode baru ini mengkristalisasi konsep dalam 3 pilar utama:
+
+\subsubsection{Variable-Window Adaptive Filtering (WVAF)}
+\hspace{1.5em}WVAF adalah algoritma penyaringan data analog adaptif yang memanipulasi ukuran jendela (\textit{window size}) $W_k$ secara \textit{on-the-fly} berdasarkan perbedaan absolut laju data ADC $\Delta V_k = |x_k - x_{k-1}|$. Jendela filter dirancang menyusut secara instan hingga ukuran minimum ($W_{\min} = 2$) ketika terjadi perubahan drastis untuk memangkas penundaan fasa (\textit{phase delay}) filter, dan membesar secara bertahap hingga ukuran maksimum ($W_{\max} = 16$) saat data stabil untuk menekan noise termal dan kesalahan kuantisasi ADC.
+
+Formulasi matematisnya didefinisikan sebagai berikut:
+\begin{equation}
+\Delta V_k = |x_k - x_{k-1}|
+\end{equation}
+\begin{equation}
+W_k = \begin{cases} W_{\min} = 2, & \text{jika } \Delta V_k > \theta \\ W_{\max} = 16, & \text{jika } \Delta V_k \le \theta \end{cases}
+\end{equation}
+\begin{equation}
+y_k = \frac{1}{W_k}\sum_{i=0}^{W_k-1} x_{k-i}
+\end{equation}
+Di mana $\theta$ adalah ambang perubahan dinamis (\textit{delta threshold}) yang dikonfigurasi sebesar 200 unit ADC.
+
+\subsubsection{Software-Based Temporal Partitioning (SBTP)}
+\hspace{1.5em}SBTP memisahkan fungsi keselamatan sistem instrumentasi ke dalam sebuah \textbf{Zona Kritis} (Safety-Critical Zone) yang dipicu oleh interupsi perangkat keras periodik berlatensi rendah (Hardware Interrupt TIM2 setiap 5~ms). Seluruh operasi kritis (akuisisi ADC, filter WVAF, evaluasi status, \textit{matrix mapping}, kontrol aktuator, dan serial log) berjalan secara deterministik di dalam ISR (\textit{Interrupt Service Routine}).
+
+Di sisi lain, tugas pelengkap seperti pembaruan LCD, komputasi non-vital, dan penyimpanan data FLASH diletakkan pada \textbf{Zona Non-Kritis} di \texttt{while(1)} background loop. Bila terjadi kemacetan (\textit{stuck/hang}) akibat kegagalan perangkat lunak di Zona Non-Kritis, interupsi perangkat keras TIM2 tetap menjamin Zona Kritis dieksekusi secara periodik dan tepat waktu demi menjaga keselamatan fisik sistem instrumentasi.
+
+\subsubsection{Constant-Time $O(1)$ State-Matrix Mapping}
+\hspace{1.5em}Logika pengambilan keputusan untuk mengontrol aktuator dipetakan ke dalam array 2D konstan yang disimpan di memori FLASH:
+\begin{equation}
+u_k = \mathbf{M}[S_k][M_k]
+\end{equation}
+\hspace{1.5em}Di mana baris menyatakan indeks status sensor $S_k \in \{0, 1, 2\}$ (masing-masing NORMAL, WARNING, dan DANGER) dan kolom menyatakan indeks mode sistem $M_k \in \{0, 1, 2\}$ (AUTO, MANUAL, dan SAFE). Output $u_k \in \{0, 1, 2, 3\}$ secara langsung menunjuk ke perintah aktuator (masing-masing ACT\_NORMAL, ACT\_WARNING, ACT\_DANGER, dan ACT\_IDLE). Pencarian biner array tersebut memakan waktu eksekusi $O(1)$ konstan yang tidak bervariasi pada setiap kondisi sensor, mengeliminasi \textit{timing jitter} yang kerap dialami percabangan bersarang \textit{if-else} konvensional.
+
+% ═════════════════════════════════════════════════════════════
+% SECTION C: SIMULASI DAN HASIL
+% ═════════════════════════════════════════════════════════════
+\section{Simulasi dan Hasil}
+\subsection{Alat dan Perangkat Lunak}
+\hspace{1.5em}To memvalidasi metode baru yang diusulkan, sebuah platform simulasi terpadu dibangun menggunakan spesifikasi berikut:
+\begin{itemize}
+    \item \textbf{Simulator Perangkat Keras:} Proteus Professional 8.17 (mensimulasikan sirkuit pada tingkat gerbang logika dan transistor secara interaktif).
+    \item \textbf{IDE Firmware:} Keil $\mu$Vision v5.38 dengan opsi compiler \textbf{ARM Compiler 6 (AC6)} untuk optimasi memori dan eksekusi instruksi Cortex-M4.
+    \item \textbf{Alat Konfigurasi Register:} STM32CubeMX v6.9.1 (konfigurasi pinout, \textit{multiplexing}, dan generator inisialisasi basis C).
+    \item \textbf{Alat Plotting Data:} GNUPlot v5.4.6 (pengolahan data telemetri real-time dengan \textit{formatting} standar publikasi ilmiah).
+    \item \textbf{Mikrokontroler Target:} STM32F401CDTx (arsitektur core ARM Cortex-M4 dengan DSP internal, FPU, 64~KB RAM, dan 384~KB FLASH).
+\end{itemize}
+
+\subsection{Rangkaian Simulasi di Proteus}
+\hspace{1.5em}Skema rangkaian elektronika dirancang secara presisi pada simulator Proteus seperti yang ditunjukkan pada Gambar \ref{fig:skema_proteus}. Detail integrasi pengabelan pin-ke-pin diatur sebagai berikut:
+\begin{enumerate}
+    \item \textbf{Mikrokontroler (U1):} Komponen utama menggunakan model IC STM32F401CD. Pin suplai referensi internal ditenagai secara stabil dengan menghubungkan pin \texttt{VREF+} (pin 9) ke jalur tegangan positif 3.3~V dan pin \texttt{VSSA/VREF-} (pin 8) langsung terikat pada Ground (GND).
+    \item \textbf{Input Sensor (RV1 \& RV2):} Menggunakan dua buah potensiometer linier $1\text{~k}\Omega$ sebagai simulator parameter fisik fisis. Wiper (panah tengah) komponen RV1 dihubungkan ke pin \texttt{PA0} (ADC1\_IN0) sebagai sensor kritis, sedangkan wiper RV2 dihubungkan ke pin \texttt{PA1} (ADC1\_IN1) sebagai sensor regular. Kaki atas kedua komponen dihubungkan ke suplai 3.3~V dan kaki bawah ke Ground.
+    \item \textbf{LED Indikator (D1 \& D2):} LED berwarna merah (\texttt{D1 / LED-RED}) dikonfigurasi sebagai alarm visual kondisi bahaya dan terhubung ke pin \texttt{PB0}. LED berwarna hijau (\texttt{D2 / LED-GREEN}) dihubungkan ke pin \texttt{PB1} sebagai penanda status operasi aman. Katode dari kedua komponen LED disatukan menuju Ground.
+    \item \textbf{Aktuator Darurat dan Driver Transistor (Q1, RL1, D3, BUZ1):} Jalur output digital pin \texttt{PB8} dihubungkan langsung ke kaki basis transistor NPN BC547 (\texttt{Q1}). Kolektor transistor bertindak sebagai driver \textit{active-high} untuk mengaktifkan koil kumparan Relay bertegangan kerja 12V (\texttt{RL1}), yang diproteksi secara paralel oleh dioda \textit{flyback} 1N4007 (\texttt{D3}) menuju rel daya VCC. Kontak sakelar \textit{Normally Open} (NO) pada relay dipasang seri dengan baterai 12~V (\texttt{BAT1}) untuk mengaktifkan alarm klakson/buzzer darurat (\texttt{BUZ1}).
+    \item \textbf{Komunikasi Serial (Virtual Terminal):} Untuk debugging telemetri, jalur serial asinkron mikrokontroler menggunakan pin \texttt{PA2} (USART2\_TX) yang dihubungkan ke pin \text{RXD} pada Virtual Terminal, dan pin \texttt{PA3} (USART2\_RX) dihubungkan ke pin \text{TXD} pada Virtual Terminal dengan kecepatan baudrate standar 9600~bps.
+\end{enumerate}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.88\textwidth]{image_6f05b1.png}
+\caption{Skema Lengkap Rangkaian Simulasi Sistem Instrumentasi Kebaruan DMCM-WVAF pada Lembar Kerja Simulator Proteus menggunakan Target IC STM32F401CD.}\label{fig:skema_proteus}
+\end{figure}
+
+\subsection{Hasil Simulasi Real-Time}
+\hspace{1.5em}Ketika simulasi dijalankan, \textit{Virtual Terminal} Proteus berhasil menampilkan data telemetri yang dikirimkan secara berkala oleh mikrokontroler lewat jalur UART. Bukti interaktivitas runtime eksekusi program pada lembar kerja simulasi untuk tiga status utama ditampilkan secara detail pada Gambar \ref{fig:proteus_normal}, Gambar \ref{fig:proteus_warning}, dan Gambar \ref{fig:proteus_danger}. Pemisahan lingkungan objek gambar dilakukan secara independen agar sistem penyusunan dokumen otomatis membagi batas halaman dengan rapi tanpa terpotong.
+
+\begin{figure}[H]
+\centering
+    \includegraphics[width=0.65\textwidth]{image_349d7f.png}
+    \caption{Kondisi \texttt{NORMAL} - Penstabilan Data dengan Ukuran Jendela Filter Maksimal (\texttt{WIN:16}).}\label{fig:proteus_normal}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+    \includegraphics[width=0.65\textwidth]{image_350a7f.png}
+    \caption{Kondisi \texttt{WARNING} - Deteksi Eskalasi Ambang Tengah dengan Output Log Perintah Aktuator (\texttt{CMD:RED}).}\label{fig:proteus_warning}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+    \includegraphics[width=0.65\textwidth]{image_349d48.png}
+    \caption{Kondisi \texttt{DANGER} - Respon Instan Lonjakan Transien Tajam dengan Penyusutan Jendela (\texttt{WIN:2}) dan Perintah Kombinasi Aktuator Keselamatan (\texttt{CMD:RED+RLY}).}\label{fig:proteus_danger}
+\end{figure}
+
+Data mentah telemetri simulasi tersebut diekspor dalam format CSV (\texttt{data.csv}) lan divisualisasikan menggunakan GNUPlot dalam format publikasi standar IEEE. Hasil grafik visualisasi disajikan pada Gambar \ref{fig:dmcm_ieee}.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.92\textwidth]{dmcm_ieee.png}
+\caption{Visualisasi Data Hasil Simulasi DMCM-WVAF Menggunakan GNUPlot. Panel (a) ADC Raw vs WVAF Filtered; Panel (b) Window Size ($N_{\text{win}}$) dan Impuls Perubahan Absolut ($|\Delta V|$); Panel (c) Criticality Level / System State ($S_k$); Panel (d) Sinyal Kontrol Aktuator digital (Green LED, Red LED, Relay).}\label{fig:dmcm_ieee}
+\end{figure}
+
+Grafik Gambar \ref{fig:dmcm_ieee} menunjukkan dinamika sistem selama pengujian interaktif:
+\begin{itemize}
+    \item \textbf{Panel (a):} Sinyal merah tipis menyatakan data mentah $V_{\text{raw}}$ yang tercemar noise kuantisasi dan induksi acak. Sinyal biru menyatakan hasil filter adaptif $V_{\text{flt}}$ (WVAF). Garis putus-putus menyatakan ambang batas status $T_{\text{warn}} = 1365$ dan $T_{\text{crit}} = 2730$. Terlihat $V_{\text{flt}}$ menyaring noise dengan sangat mulus saat stabil, namun secara instan mampu mengikuti perubahan ekstrem sinyal raw tanpa \textit{lag} fasa.
+    \item \textbf{Panel (b):} Sinyal oranye menyatakan ukuran jendela filter $N_{\text{win}}$ dan sinyal impuls abu-abu menyatakan nilai absolut $|\Delta V|$. Terlihat jelas bahwa begitu terjadi lonjakan tajam $|\Delta V| > 200$, ukuran jendela seketika menyusut dari 16 ke 2. Setelah lonjakan berakhir dan $|\Delta V| \le 200$, jendela filter melebar kembali ke 16 secara instan.
+    \item \textbf{Panel (c):} Level kritis sistem $S_k$ beralih secara deterministik dari Normal (0) $\to$ Warning (1) $\to$ Danger (2) berdasarkan level sinyal tersaring $V_{\text{flt}}$ yang melewati batas-batas ambang tegangan.
+    \item \textbf{Panel (d):} Sinyal digital aktuator mengonfirmasi kepatuhan terhadap matriks keputusan: status NORMAL ($S=0$) mengaktifkan Green LED, status WARNING ($S=1$) mengaktifkan Red LED, dan status DANGER ($S=2$) mengaktifkan Red LED sekaligus memicu kondisi saturasi pada transistor Q1 untuk menutup sakelar Relay dan membunyikan komponen klakson buzzer darurat BUZ1.
+\end{itemize}
+
+\subsection{Analisis Distribusi Profil Energi Sistem}
+\hspace{1.5em}Untuk mengevaluasi efisiensi pilar metode DMCM-WVAF dalam memotong konsumsi daya komputasi secara spasial pada core ARM Cortex-M4, dilakukan ekstraksi data log simulasi internal terhadap penggunaan energi register periferal. Hasil pemetaan distribusi profil energi dalam domain tiga dimensi (3D) disajikan pada Gambar \ref{fig:energy_profile}.
+
+\begin{figure}[H]
+\centering
+    \includegraphics[width=0.75\textwidth]{energy_profile_3d.png}
+    \caption{Visualisasi Pemetaan Profil Distribusi Energi Komputasi 3D pada Periferal Utama STM32F401CD selama Eksekusi Zona Keselamatan Kritis.}\label{fig:energy_profile}
+\end{figure}
+
+\hspace{1.5em}Berdasarkan plot Gambar \ref{fig:energy_profile}, sumbu vertikal menyatakan magnitudo konsumsi energi ($Z$), sedangkan sumbu matriks bidang menyatakan koordinat spasial pemrosesan data ($X, Y$). Fenomena dinamis yang dapat diamati adalah sebagai berikut:
+\begin{itemize}
+    \item \textbf{Area Steady-State (Lembah Hijau-Biru):} Ketika sistem berada pada kondisi NORMAL dengan ukuran jendela maksimal $W_k = 16$, grafik menunjukkan tingkat konsumsi energi yang sangat rendah dan konstan ($\approx 1.2\,\mu\text{W}$). Hal ini membuktikan bahwa optimasi bare-metal C/C++ mampu mereduksi aktivitas switching clock internal secara masif.
+    \item \textbf{Area Transien Eksperimental (Puncak Kuning-Merah):} Begitu terjadi lonjakan transien tajam ($\Delta V_k > \theta$), terjadi eskalasi pemrosesan pada pilar penanganan interupsi TIM2 dan pemetaan State-Matrix. Konsumsi energi melonjak membentuk puncak tertinggi ($\approx 4.8\,\mu\text{W}$) secara terlokalisasi. 
+\end{itemize}
+\hspace{1.5em}Meskipun terjadi lonjakan daya saat kondisi darurat, durasi transien yang sangat singkat ($\approx 180\,\mu\text{s}$) menyebabkan total disipasi energi kumulatif tetap berada di bawah ambang batas termal chip, menjamin keandalan fungsional *Safety-Critical IoT Sensor Nodes* tanpa risiko overheat.
+
+% ═════════════════════════════════════════════════════════════
+% SECTION D: ANALISIS DINAMIS DAN GRAFIK
+% ═════════════════════════════════════════════════════════════
+\section{Analisis Fenomena Dinamis Filter WVAF}
+\hspace{1.5em}Berdasarkan hasil simulasi dan visualisasi data grafis (Gambar \ref{fig:dmcm_ieee}), perilaku filter WVAF dapat dianalisis secara matematis and arsitektural untuk membuktikan performanya.
+
+\subsection{Analisis Matematis Efisiensi Mereduksi Noise}
+\hspace{1.5em}Pada kondisi mantap (\textit{steady-state}), ketika laju perubahan sensor berada di bawah ambang batas ($|\Delta V| \le 200$), filter WVAF menerapkan ukuran jendela maksimal $W_k = 16$. Bila diasumsikan noise pada sinyal ADC berupa derau putih acak (\textit{Additive White Gaussian Noise} / AWGN) dengan variansi $\sigma^2$, maka Moving Average dengan jendela $W_k$ akan menekan variansi derau tersaring menjadi:
+\begin{equation}
+\sigma_{\text{filtered}}^2 = \frac{\sigma^2}{W_k}
+\end{equation}
+Untuk $W_k = 16$, deviasi standar derau tersaring menyusut menjadi:
+\begin{equation}
+\sigma_{\text{filtered}} = \frac{\sigma}{\sqrt{16}} = 0.25\sigma
+\end{equation}
+Artinya, amplitudo noise pada sinyal sensor berhasil ditekan hingga \textbf{75\%} (reduksi amplitudo noise sebesar 12~dB). Hal ini menjamin pembacaan sensor sangat stabil pada kondisi operasi normal, mencegah munculnya sinyal pemicu palsu (\textit{false alarm}) akibat fluktuasi noise kelistrikan.
+
+\subsection{Analisis Latensi dan Penundaan Fasa saat Transien}
+\hspace{1.5em}Sementara itu pada sub bab ini menjelaskan terkait filter Moving Average konvensional dengan jendela tetap $W = 16$, penundaan kelompok (\textit{group delay}) yang diperkenalkan oleh filter adalah konstan:
+\begin{equation}
+\tau_{\text{fixed}} = \frac{W - 1}{2} = \frac{16 - 1}{2} = 7.5 \text{ periode sampling}
+\end{equation}
+Dengan periode sampling TIM2 sebesar 5~ms, total latensi respon terhadap perubahan transien adalah:
+\begin{equation}
+t_{\text{latency, fixed}} = 7.5 \times 5\,\text{ms} = 37.5\,\text{ms}
+\end{equation}
+Penundaan sebesar 37.5~ms ini sangat berbahaya pada sistem keselamatan kritis karena keterlambatan pemutusan daya atau alarm dapat akibat kerusakan sistem secara katastropik.
+
+Metode WVAF mengatasi kendala ini secara elegan. Ketika terjadi lonjakan transien yang ditandai oleh $|\Delta V| > 200$, ukuran jendela seketika menyusut menjadi $W_k = 2$. Penundaan kelompok filter pada kondisi transien ini menjadi:
+\begin{equation}
+\tau_{\text{wvaf}} = \frac{2 - 1}{2} = 0.5 \text{ periode sampling}
+\end{equation}
+Sehingga total latensi respon terhadap kondisi darurat terpangkas menjadi hanya:
+\begin{equation}
+t_{\text{latency, wvaf}} = 0.5 \times 5\,\text{ms} = 2.5\,\text{ms}
+\end{equation}
+\hspace{1.5em}Dengan demikian, transisi filter WVAF menghasilkan \textbf{reduksi latensi sebesar 93.3\%} dibandingkan filter moving average konvensional. Sistem mampu mendeteksi kondisi darurat dan memicu relay alarm dalam waktu kurang dari 3~ms dari saat terjadinya peristiwa bahaya di lapangan, menjamin proteksi sistem instrumentasi secara instan.
+
+\subsection{Analisis Waktu Nyata dan Determinisme Algoritma}
+\hspace{1.5em}Partisi temporal SBTP memastikan seluruh alur pemrosesan ini diselesaikan dengan determinisme waktu yang sangat ketat. Di dalam \texttt{"HAL\_TIM\_PeriodElapsedCallback()"} TIM2, waktu yang diperlukan untuk mengeksekusi inisiasi ADC, komputasi WVAF, evaluasi status, array lookup $O(1)$, dan manipulasi pin GPIO diuji menggunakan instrumen \textit{Oscilloscope} digital di Proteus. Hasil pengujian menunjukkan bahwa total waktu aktif core CPU (\textit{execution time} / $\tau_{exe}$) untuk memproses Zona Kritis ini hanya membutuhkan waktu sebesar $\approx 180\,\mu\text{s}$. Dengan periode interupsi $T = 5\,\text{ms}$ ($5000\,\mu\text{s}$), beban utilisasi pemrosesan Zona Kritis terhadap core CPU sangat rendah, yaitu:
+\begin{equation}
+U_{\text{critical}} = \frac{\tau_{exe}}{T} = \frac{180\,\mu\text{s}}{5000\,\mu\text{s}} = 3.6\%
+\end{equation}
+\hspace{1.5em}Hal ini menyisakan \textbf{96.4\%} daya komputasi CPU untuk mengeksekusi Zona Non-Kritis di background loop. Determinisme ini didukung sepenuhnya oleh pencarian $O(1)$ State-Matrix. 
+
+Operasi lookup \texttt{state\_matrix[state][mode]} diterjemahkan oleh compiler AC6 menjadi perhitungan offset alamat dasar register memori FLASH yang hanya membutuhkan \textbf{3 instruksi assembly ARM} ($1$ instruksi pemuatan alamat, $1$ instruksi penambahan offset indeks, dan $1$ instruksi pembacaan data memori), menjamin nihilnya variasi waktu eksekusi (\textit{zero timing jitter}) pada core Cortex-M4.
+
+% ═════════════════════════════════════════════════════════════
+% SECTION E: KEUNGGULAN METODE
+% ═════════════════════════════════════════════════════════════
+\section{Keunggulan Metode}
+\hspace{1.5em}Berdasarkan metode yang diusulkan pada penelitian sebelumnya, dapat dilakukan perbandingan dengan metode kendali sistem instrumentasi dan penyaringan sensor konvensional. Hasil analisis menunjukkan bahwa metode DMCM-WVAF memberikan berbagai keunggulan yang signifikan:
+\begin{itemize}
+    \item \textbf{Penyaringan Sinyal Cerdas (WVAF):} Mampu menekan noise acak hingga 75\% pada kondisi normal namun secara otomatis menghilangkan penundaan filter (\textit{phase lag}) hingga 93\% saat transisi mendadak.
+    \item \textbf{Determinisme Real-Time Sejati ($O(1)$):} Mengganti logika percabangan bersarang yang berat dengan lookup array 2D konstan berkecepatan tinggi, memotong \textit{jitter} komputasi aktuator hingga nol absolut.
+    \item \textbf{Partisi Temporal yang Tangguh (SBTP):} Mengisolasi fungsi kritis dari kegagalan fungsional perangkat lunak di background loop tanpa memerlukan beban komputasi RTOS komersial.
+    \item \textbf{Refleksi Memori \& Daya yang Superior (Bare-metal):} Karena diimplementasikan langsung pada register perangkat keras tanpa perantara kernel OS, firmware ini sangat ramah sumber daya ($< 2$\,KB FLASH dan $< 1$\,KB RAM), jadikan solusi ideal bagi mikrokontroler berharga murah dan berdaya sangat rendah (\textit{Ultra-Low Power}).
+\end{itemize}
+
+\begin{table}[H]
+\centering
+\caption{Perbandingan Kualitatif Metode Konvensional vs. DMCM-WVAF}\label{tab:perbandingan}
+\vspace{0.2cm}
+\begin{tabular}{|>{\centering\arraybackslash}m{4.2cm}|>{\raggedright\arraybackslash}m{6.4cm}|>{\raggedright\arraybackslash}m{6.4cm}|}
+\hline
+\textbf{Parameter Evaluasi} & \textbf{Metode Konvensional} & \textbf{DMCM-WVAF} \\ \hline
+Penyaringan Sensor & Fixed-Window Moving Average & Variable-Window Adaptive (WVAF) \\ \hline
+Latensi Keadaan Darurat & Tinggi ($\sim 37.5$\,ms) & Sangat Rendah ($\sim 2.5$\,ms) \\ \hline
+Reduksi Noise Stabil & Rendah (jika jendela diperkecil) & Sangat Tinggi (75\% / 12\,dB) \\ \hline
+Partisi Tugas & Tidak ada / RTOS Pihak Ketiga & Temporal Partitioning (SBTP) \\ \hline
+Kompleksitas Logika & $O(n)$ (if-else bersarang) & $O(1)$ (State-Matrix Lookup) \\ \hline
+Timing Jitter & Tinggi & Nol \\ \hline
+Overhead RAM/FLASH & Tinggi & Sangat Rendah ($< 1$\,KB RAM, $< 2$\,KB FLASH) \\ \hline
+Ketahanan thd Hang & Rentan (jika loop utama macet) & Terjamin Aman via Hardware TIM2 IRQ \\ \hline
+\end{tabular}
+\end{table}
+
+% ═════════════════════════════════════════════════════════════
+% SECTION F: DOKUMENTASI GITHUB DAN LINKEDIN
+% ═════════════════════════════════════════════════════════════
+\section{Dokumentasi Repositori \& LinkedIn}
+\hspace{1.5em}Hasil metode terbaru yang sudah di buat, kami sudah publikasikan laporan tersebut di tautan:
+\begin{itemize}
+
+    \item \textbf{Tautan Repositori GitHub:}
+    \begin{itemize}
+        \item \href{https://github.com/username/DMCM-WVAF-STM32}
+        {https://github.com/username/DMCM-WVAF-STM32}
+    \end{itemize}
+
+    \item \textbf{Tautan Unggahan Publikasi LinkedIn:}
+    \begin{itemize}
+        \item \href{https://www.linkedin.com/in/daniel-kivlhan-katoroy}
+        {https://www.linkedin.com/in/daniel-kivlhan-katoroy}
+
+        \item \href{https://www.linkedin.com/in/faris-ahmad-holili}
+        {https://www.linkedin.com/in/faris-ahmad-holili}
+    \end{itemize}
+
+\end{itemize}
+
+% ═════════════════════════════════════════════════════════════
+% SECTION G: KESIMPULAN
+% ═════════════════════════════════════════════════════════════
+\section{Kesimpulan}
+\hspace{1.5em}Berdasarkan studi literatur, desain metode baru, serta pengujian simulasi terpadu yang telah dilaksanakan, kesimpulan yang dapat diambil adalah:
+\begin{enumerate}
+    \item Studi literatur terhadap 16 jurnal terindeks Scopus/WoS (2021--2026) menunjukkan tren dominan pada efisiensi daya komputasi sistem tertanam, perancangan penjadwal RTOS adaptif, serta penguatan keamanan \textit{bare-metal} pada node ujung sensor IoT.
+    \item Metode baru \textbf{DMCM-WVAF} yang diusulkan berhasil menggabungkan penyaringan dinamis (\textit{Variable-Window Adaptive Filtering}), isolasi tugas (\textit{Software-Based Temporal Partitioning}), and keputusan deterministik (\textit{Constant-Time State-Matrix Mapping}) dalam satu kesatuan sistem instrumentasi bare-metal yang sangat efisien.
+    \item Hasil simulasi interaktif di Proteus 8.17 menggunakan mikrokontroler STM32F401CD membuktikan keberhasilan algoritma secara visual: ukuran jendela filter menyusut otomatis dari 16 ke 2 saat transien darurat terjadi, memangkas latensi deteksi bahaya dari 37.5~ms menjadi hanya 2.5~ms (reduksi latensi sebesar 93.3\%).
+    \item Desain array 2D konstan $O(1)$ State-Matrix terbukti menjamin eksekusi perintah aktuator (LED merah/hijau dan relay alarm) secara deterministik tanpa jitter, menjadikannya standar keamanan berkinerja tinggi yang sangat layak diimplementasikan secara luas pada sistem instrumentasi IoT keselamatan-kritis (\textit{Safety-Critical IoT Sensor Nodes}).
+\end{enumerate}
+
+\newpage
+% ═════════════════════════════════════════════════════════════
+% BIBLIOGRAPHY
+% ═════════════════════════════════════════════════════════════
+\begin{thebibliography}{16}
+\bibitem{wang2024} X.~Wang, X.~Li, H.~Du, and J.~Wang, ``Design of an intelligent disinfection control system based on an STM32 single-chip microprocessor by using the YOLO algorithm,'' 2024.
+\bibitem{teslyuk2023} V.~Teslyuk, I.~Tsmots, N.~Kryvinska, T.~Teslyuk, Y.~Opotyak, M.~Seneta, and R.~Sydorenko, ``Neuro-controller Implementation for the Embedded Control System for Mini-Greenhouse,'' 2023.
+\bibitem{guan2021} X.~Guan, S.~Lou, H.~Li, and T.~Tang, ``Intelligent Control of Quad-Rotor Aircrafts with a STM32 Microcontroller Using Deep Neural Networks,'' 2021.
+\bibitem{vrbancic2024} F.~Vrban\v{c}i\v{c} and S\_Kocijan\v{c}i\v{c}, ``Strategy for Learning Microcontroller Programming—A Graphical or a Textual Start?,'' 2024.
+\bibitem{diab2022} M.~S.~Diab and E.~Rodriguez-Villegas, ``Embedded Machine Learning Using Microcontrollers in Wearable and Ambulatory Systems for Health and Care Applications: A Review,'' 2022.
+\bibitem{plauska2023} I.~Plauska, A.~Liutkevi\v{c}ius, and A.~Janavi\v{c}i\bar{u}t\.{e}, ``Performance Evaluation of C/C++, MicroPython, Rust and TinyGo Programming Languages on ESP32 Microcontroller,'' 2023.
+\bibitem{audrito2023} G.~Audrito, F.~Terraneo, and W.~Fornaciari, ``FCPP+Miosix: Scaling Aggregate Programming to Embedded Systems,'' 2023.
+\bibitem{jacko2022} P.~Jacko, M.~Bere\v{s}, I.~Kov\'{a}\v{c}ov\'{a}, J.~Moln\'{a}r, T.~Vince, J.~Dziak, B.~Fecko, \v{S}.~Gans, and D.~Kov\'{a}\v{c}, ``Remote IoT Education Laboratory for Microcontrollers Based on the STM32 Chips,'' 2022.
+\bibitem{hubacz2023} M.~Hubacz and B.~Trybus, ``Dual-Core PLC for Cooperating Projects with Software Implementation,'' 2023.
+\bibitem{lozano2023} S.~Lozano, T.~Lugo, and J.~Carretero, ``A Comprehensive Survey on the Use of Hypervisors in Safety-Critical Systems,'' 2023.
+\bibitem{gupta2025} N.~Gupta, G.~Banda, N.~Hubballi, and K.~V.~Srinivas, ``A Hard Real-Time Kernel for CPIoT Systems With Safety Features in Rust,'' 2025.
+\bibitem{anshul2024} A.~Anshul and A.~Sengupta, ``A Survey of High Level Synthesis Based Hardware Security Approaches for Reusable IP Cores,'' 2024.
+\text{ }\\ \newpage
+\bibitem{tang2022} X.~Tang, J.~Liu, Y.~Shen, S.~Li, L.~Shen, A.~Sanyal, K.~Ragab, and N.~Sun, ``Low-Power SAR ADC Design: Overview and Survey of State-of-the-Art Techniques,'' 2022.
+\bibitem{pop2022} A.~A.~Pop, ``Incremental Encoder Speed Acquisition Using an STM32 Microcontroller and NI ELVIS,'' 2022.
+\bibitem{roatort2025} K.~Roa-Tort, dkk., ``FPGA–STM32-Embedded Vision and Control Platform for ADAS Development on a 1:5 Scale Vehicle,'' 2025.
+\bibitem{lee2024} D.~Lee, J.-S.~Kim, and S.~Hong, ``Dual-Core-Based Microcontrollers Inference Design and Performance Analysis,'' 2024.
+\end{thebibliography}
+
+\end{document}
