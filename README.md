@@ -76,5 +76,5 @@ Arsitektur DMCM secara ketat memisahkan prioritas pemrosesan menjadi dua zona ek
 * **Daniel Kivlhan Katoroy** (NRP. 2042241004)
 * **Faris Ahmad Holili** (NRP. 2042241028)
 
-*Dosen Pengampu: Ahmad Radhy, S.Si., M.Si.*// 
+*Dosen Pengampu: Ahmad Radhy, S.Si., M.Si.*\ 
 **Program Studi Teknologi Rekayasa Instrumentasi, Departemen Teknik Instrumentasi, Fakultas Vokasi, Institut Teknologi Sepuluh Nopember (ITS), Surabaya, Indonesia.**
