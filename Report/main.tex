@@ -229,9 +229,9 @@
 \subsection{Deskripsi Metode dan Integrasi Future Work}
 \hspace{1.5em}Metode DMCM-WVAF merekayasa interaksi dinamis antara sensor dan aktuator secara radikal dengan memadukan kelima \textit{future work} (FW1--FW5) langsung pada lapisan perangkat keras dasar (\textit{bare-metal} C/C++). Integrasi ini membentuk satu ekosistem program yang padat energi, hemat memori, dan deterministik tanpa memerlukan beban operasi dari kernel RTOS pihak ketiga.
 
-Pengondisian sinyal adaptif (FW1) dan penekanan noise $kT/C$ (FW2) dilebur ke dalam pilar pertama melalui fungsi penyaringan \textit{Variable-Window Adaptive Filtering} (WVAF). Alur ini dikendalikan secara langsung oleh pembacaan register data ADC internal (\texttt{ADC1->DR}). Berbeda dengan filter konvensional yang kaku, ukuran jendela data ($W_k$) pada algoritma ini bergeser secara atomik. Pada kondisi mantap, program mengalokasikan memori melingkar (\textit{circular buffer}) untuk ukuran maksimal $W_{\max}=16$ guna mereduksi riak noise kelistrikan. Namun, begitu impuls transien ekstrem terdeteksi ($\Delta V_k > \theta$), pointer indeks jendela dipangkas secara instan menuju ukuran minimal $W_{\min}=2$ demi membuang tundaan fasa (\textit{phase lag}) filter secara total.
+Pengondisian sinyal adaptif (FW1) dan penekanan noise $kT/C$ (FW2) dilebur ke dalam pilar pertama melalui fungsi penyaringan \textit{Variable-Window Adaptive Filtering} (WVAF). Alur ini dikendalikan secara langsung oleh pembacaan data ADC dari sensor LM35 melalui fungsi \texttt{WVAF\_Filter()} yang dipanggil di dalam ISR setelah setiap akuisisi ADC1 Channel 1 pada pin PA1. Berbeda dengan filter konvensional yang kaku, ukuran jendela data ($W_k$) pada algoritma ini bergeser secara atomik. Pada kondisi mantap, program mengalokasikan memori melingkar (\textit{circular buffer}) untuk ukuran maksimal $W_{\max}=16$ guna mereduksi riak noise pembacaan sensor. Namun, begitu impuls transien ekstrem terdeteksi ($\Delta k > 200$~ADC counts — setara dengan perubahan suhu drastis), pointer indeks jendela dipangkas secara instan menuju ukuran minimal $W_{\min}=2$ demi membuang tundaan fasa (\textit{phase lag}) filter secara total.
 
-Jaminan proteksi integritas sistem terhadap galat fungsional (FW3) dan partisi tingkat kepentingan komponen (\textit{mixed-criticality} - FW4) diselesaikan melalui \textit{Software-Based Temporal Partitioning} (SBTP). Metode ini memanfaatkan manipulasi register kendali perangkat keras Timer 2 internal, yaitu register \texttt{TIM2->DIER} (untuk mengaktifkan interupsi pembaruan berkala via bit \texttt{UIE}) dan register \texttt{TIM2->CR1} (untuk aktivasi counter melalui bit \texttt{CEN}). Kode pemrograman mengisolasi seluruh tugas fungsional vital instrumentasi (akuisisi ADC, kalkulasi filter adaptif, evaluasi ambang batas, dan \textit{driving} pin output) ke dalam \textit{Safety-Critical Zone} yang berjalan secara mutlak di dalam \textit{Interrupt Service Routine} (ISR) berkala 5~ms. Jika terjadi kondisi macet (\textit{hang/stuck}) pada kode latar belakang \textit{best-effort} di Zona Non-Kritis (\texttt{while(1)}), interupsi hardware tetap memaksa CPU untuk mengeksekusi fungsi keselamatan tepat waktu.
+Jaminan proteksi integritas sistem terhadap galat fungsional (FW3) dan partisi tingkat kepentingan komponen (\textit{mixed-criticality} - FW4) diselesaikan melalui \textit{Software-Based Temporal Partitioning} (SBTP). Metode ini memanfaatkan manipulasi register kendali perangkat keras Timer 2 internal, yaitu register \texttt{TIM2->DIER} (untuk mengaktifkan interupsi pembaruan berkala via bit \texttt{UIE}) dan register \texttt{TIM2->CR1} (untuk aktivasi counter melalui bit \texttt{CEN}). Kode pemrograman mengisolasi seluruh tugas fungsional vital instrumentasi (akuisisi ADC Channel~1 PA1, kalkulasi filter WVAF adaptif, evaluasi ambang batas, dan \textit{driving} pin output) ke dalam \textit{Safety-Critical Zone} yang berjalan secara mutlak di dalam \textit{Interrupt Service Routine} (ISR) berkala 5~ms melalui callback \texttt{HAL\_TIM\_PeriodElapsedCallback()}. Zona Non-Kritis di \texttt{while(1)} hanya melakukan \texttt{HAL\_Delay(50)} dan me-reset variabel \texttt{crit\_flag}. Jika terjadi kondisi macet (\textit{hang/stuck}) pada kode latar belakang \textit{best-effort} di Zona Non-Kritis, interupsi hardware tetap memaksa CPU untuk mengeksekusi fungsi keselamatan tepat waktu.
 
 Optimasi latensi respon dan eliminasi \textit{timing jitter} (FW5) diwujudkan melalui mekanisme pemetaan keputusan \textit{Constant-Time} $O(1)$ State-Matrix. Alur kontrol tidak lagi menggunakan instruksi percabangan bersarang (\textit{if-else/switch-case}) yang menghasilkan variasi waktu eksekusi akibat ketidakpastian jalur instruksi assembly. Sebagai gantinya, status sensor $S_k$ dan mode operasi $M_k$ langsung dikonversi menjadi indeks array 2D konstan yang disimpan di memori FLASH. Perintah aktuasi kemudian dieksekusi menggunakan manipulasi bit-masking berkecepatan tinggi pada register atomik \texttt{GPIOB->BSRR} (\textit{Bit Set/Reset Register}) untuk menggerakkan pin PB0, PB1, dan PB8 secara instan.
 
@@ -248,19 +248,19 @@ Optimasi latensi respon dan eliminasi \textit{timing jitter} (FW5) diwujudkan me
 
     % ── COLUMN 1: SENSOR LAYER
     \node[ieeeBlock] (physSens) at (0, 0) {
-        \textbf{Physical Sensors}\\
-        \scriptsize RV1 (PA0) \& RV2 (PA1)\\
-        \scriptsize $s_1(t), s_2(t)$ (Analog)
+        \textbf{Physical Sensor}\\
+        \scriptsize LM35 (PA1)\\
+        \scriptsize $s(t)$ (Analog)
     }; 
     \node[ieeeShadedBlock] (adc) at (0, -2.6) {
         \textbf{12-Bit ADC}\\
-        \scriptsize STM32F401 Scan Mode\\
+        \scriptsize STM32F401 ADC1 Channel 1\\
         \scriptsize Output: $x_k \in [0, 4095]$
     }; 
     \node[ieeeBlock] (wvaf) at (0, -5.4) {
         \textbf{WVAF Filter}\\
-        \scriptsize $\Delta V_k = |x_k - x_{k-1}|$\\[3pt]
-        \scriptsize $W_k = \begin{cases} 2, & \Delta V_k > \theta \\ 16, & \Delta V_k \le \theta \end{cases}$\\ [3pt]
+        \scriptsize $\Delta T_k = |x_k - x_{k-1}|$\\[3pt]
+        \scriptsize $W_k = \begin{cases} 2, & \Delta k > 200 \\ 16, & \Delta k \le 200 \end{cases}$\\ [3pt]
         \scriptsize Output: $y_k = \text{avg}(x_k, W_k)$
     }; 
 
@@ -284,8 +284,8 @@ Optimasi latensi respon dan eliminasi \textit{timing jitter} (FW5) diwujudkan me
     \node[ieeeBlock, dashed] (nonCrit) at (5.8, -8.0) {
         \textbf{Non-Critical Tasks}\\
         \scriptsize Best-Effort Context (\texttt{while(1)})\\
-        \scriptsize UART Telemetry, LCD Update,\\
-        \scriptsize Flash Data Logging
+        \scriptsize \texttt{HAL\_Delay(50)} + reset \texttt{crit\_flag}\\
+        \scriptsize ADC dibaca langsung di ISR
     };
 
     % ── COLUMN 3: ACTUATOR LAYER
@@ -303,12 +303,12 @@ Optimasi latensi respon dan eliminasi \textit{timing jitter} (FW5) diwujudkan me
         \scriptsize Warning Status (PB0)
     }; 
     \node[ieeeSubBlock] (relay) at (12.2, -5.4) {
-        \textbf{Relay \& Buzzer}\\
+        \textbf{Relay}\\
         \scriptsize Danger Alarm (PB8)
     }; 
     \node[ieeeShadedBlock] (uart) at (12.2, -8.0) {
-        \textbf{UART Serial Monitor}\\
-        \scriptsize PA2 (TX) @ 9600~bps\\
+        \textbf{USART1 Serial Monitor}\\
+        \scriptsize PA9 (TX) @ 9600~bps\\
         \scriptsize Telemetry Logging
     };
 
@@ -358,10 +358,10 @@ Optimasi latensi respon dan eliminasi \textit{timing jitter} (FW5) diwujudkan me
     }; 
     \node[ieeeLoop] (whileLoop) at (0, -5.4) {while(1)}; 
     \node[ieeeBlock, text width=4.5cm] (bgTasks) at (0, -7.4) {
-        \textbf{Non-Critical Background Tasks}\\
-        \scriptsize $\bullet$ \texttt{LCD\_UpdateDisplay()}\\
-        \scriptsize \texttt{Log\_DataToFlash()}\\
-        \scriptsize $\bullet$ \texttt{HAL\_Delay(50)} [Best-effort]
+        \textbf{Non-Critical Tasks}\\
+        \scriptsize \texttt{HAL\_Delay(50)} + reset \texttt{crit\_flag}\\
+        \scriptsize ADC dibaca langsung di ISR\\
+        \scriptsize [Best-effort background loop]
     };
 
     % Main Loop Arrows
@@ -378,14 +378,14 @@ Optimasi latensi respon dan eliminasi \textit{timing jitter} (FW5) diwujudkan me
         \scriptsize Set \texttt{critical\_flag = 1}
     }; 
     \node[ieeeFcProcess] (readADC) at (7.5, -3.2) {
-        \textbf{1. Read ADC Channel}\\
-        \scriptsize Sample $x_k = \text{ADC1}\rightarrow\text{DR}$
+        \textbf{1. Read ADC (PA1 — LM35)}\\
+        \scriptsize Poll ADC1\_CH1 $\to x_k$
     }; 
     \node[ieeeFcProcess] (calcDelta) at (7.5, -5.0) {
         \textbf{2. Compute Delta}\\
-        \scriptsize $\Delta V_k = |x_k - x_{k-1}|$
+        \scriptsize $\Delta T_k = |x_k - x_{k-1}|$
     }; 
-    \node[ieeeFcDecision] (decDelta) at (7.5, -7.2) { $\Delta V_k > \theta$?\\ \scriptsize ($\theta = 200$) }; 
+    \node[ieeeFcDecision] (decDelta) at (7.5, -7.2) { $\Delta k > \theta$?\\ \scriptsize ($\theta = 200$ ADC) }; 
 
     % Symmetrical branches with highly comfortable space allocation
     \node[ieeeFcSubBlock] (wMax) at (4.5, -9.4) {
@@ -419,7 +419,7 @@ Optimasi latensi respon dan eliminasi \textit{timing jitter} (FW5) diwujudkan me
     }; 
     \node[ieeeFcSubBlock] (sDang) at (10.7, -18.2) {
         \textbf{Danger ($S_k=2$)}\\
-        \scriptsize Relay \& Buzzer On
+        \scriptsize Relay \& Red LED On
     };
 
     % Bottom Flow Operations properly separated
@@ -468,24 +468,22 @@ Optimasi latensi respon dan eliminasi \textit{timing jitter} (FW5) diwujudkan me
 \hspace{1.5em}Metode baru ini mengkristalisasi konsep dalam 3 pilar utama:
 
 \subsubsection{Variable-Window Adaptive Filtering (WVAF)}
-\hspace{1.5em}WVAF adalah algoritma penyaringan data analog adaptif yang memanipulasi ukuran jendela (\textit{window size}) $W_k$ secara \textit{on-the-fly} berdasarkan perbedaan absolut laju data ADC $\Delta V_k = |x_k - x_{k-1}|$. Jendela filter dirancang menyusut secara instan hingga ukuran minimum ($W_{\min} = 2$) ketika terjadi perubahan drastis untuk memangkas penundaan fasa (\textit{phase delay}) filter, dan membesar secara bertahap hingga ukuran maksimum ($W_{\max} = 16$) saat data stabil untuk menekan noise termal dan kesalahan kuantisasi ADC.
+\hspace{1.5em}WVAF adalah algoritma penyaringan data sensor suhu adaptif yang memanipulasi ukuran jendela (\textit{window size}) $W_k$ secara \textit{on-the-fly} berdasarkan perbedaan absolut nilai ADC mentah $\Delta k = |x_k - x_{k-1}|$. Jendela filter dirancang menyusut secara instan hingga ukuran minimum ($W_{\min} = 2$) ketika terjadi perubahan drastis ($\Delta k > 200$ ADC counts) untuk memangkas penundaan fasa (\textit{phase delay}) filter, dan membesar secara bertahap hingga ukuran maksimum ($W_{\max} = 16$) saat data stabil untuk menekan noise termal dan kesalahan kuantisasi sensor LM35.
 
 Formulasi matematisnya didefinisikan sebagai berikut:
 \begin{equation}
-\Delta V_k = |x_k - x_{k-1}|
+\Delta T_k = |x_k - x_{k-1}|
 \end{equation}
 \begin{equation}
-W_k = \begin{cases} W_{\min} = 2, & \text{jika } \Delta V_k > \theta \\ W_{\max} = 16, & \text{jika } \Delta V_k \le \theta \end{cases}
+W_k = \begin{cases} W_{\min} = 2, & \text{jika } \Delta k > \theta \\ W_{\max} = 16, & \text{jika } \Delta k \le \theta \end{cases}
 \end{equation}
 \begin{equation}
 y_k = \frac{1}{W_k}\sum_{i=0}^{W_k-1} x_{k-i}
 \end{equation}
-Di mana $\theta$ adalah ambang perubahan dinamis (\textit{delta threshold}) yang dikonfigurasi sebesar 200 unit ADC.
+Di mana $\theta = 200$ ADC counts adalah ambang perubahan dinamis (\textit{delta threshold}) yang dikonfigurasi pada firmware (\texttt{\#define DELTA\_THRESH 200}), $x_k$ menyatakan nilai ADC mentah (0--4095) dari sensor LM35 pada langkah ke-$k$, dan $y_k$ adalah nilai ADC tersaring. Nilai suhu dalam derajat Celsius diperoleh melalui konversi $T(^\circ\text{C}) = x_k \times 330 / 4096$.
 
 \subsubsection{Software-Based Temporal Partitioning (SBTP)}
-\hspace{1.5em}SBTP memisahkan fungsi keselamatan sistem instrumentasi ke dalam sebuah \textbf{Zona Kritis} (Safety-Critical Zone) yang dipicu oleh interupsi perangkat keras periodik berlatensi rendah (Hardware Interrupt TIM2 setiap 5~ms). Seluruh operasi kritis (akuisisi ADC, filter WVAF, evaluasi status, \textit{matrix mapping}, kontrol aktuator, dan serial log) berjalan secara deterministik di dalam ISR (\textit{Interrupt Service Routine}).
-
-Di sisi lain, tugas pelengkap seperti pembaruan LCD, komputasi non-vital, dan penyimpanan data FLASH diletakkan pada \textbf{Zona Non-Kritis} di \texttt{while(1)} background loop. Bila terjadi kemacetan (\textit{stuck/hang}) akibat kegagalan perangkat lunak di Zona Non-Kritis, interupsi perangkat keras TIM2 tetap menjamin Zona Kritis dieksekusi secara periodik dan tepat waktu demi menjaga keselamatan fisik sistem instrumentasi.
+\hspace{1.5em}SBTP memisahkan fungsi keselamatan sistem instrumentasi ke dalam sebuah \textbf{Zona Kritis} (Safety-Critical Zone) yang dipicu oleh interupsi perangkat keras periodik berlatensi rendah (Hardware Interrupt TIM2 setiap 5~ms), dan \textbf{Zona Non-Kritis} yang berjalan di background loop \texttt{while(1)}. Seluruh operasi kritis dilakukan langsung di dalam ISR \texttt{HAL\_TIM\_PeriodElapsedCallback()}: akuisisi ADC Channel~1 (PA1 --- LM35 VOUT) secara polling, komputasi filter WVAF, evaluasi status sensor, \textit{O(1) state matrix} lookup aktuator, kontrol pin output PB0/PB1/PB8 via \texttt{HAL\_GPIO\_WritePin()}, dan pengiriman log telemetri via USART1 (PA9~TX). Zona Non-Kritis di \texttt{while(1)} hanya mengeksekusi \texttt{HAL\_Delay(50)} dan me-reset \texttt{crit\_flag = 0}. Bila terjadi kemacetan (\textit{stuck/hang}) akibat kegagalan perangkat lunak di Zona Non-Kritis, interupsi perangkat keras TIM2 tetap menjamin Zona Kritis dieksekusi secara periodik tepat waktu demi menjaga keselamatan fisik sistem.
 
 \subsubsection{Constant-Time $O(1)$ State-Matrix Mapping}
 \hspace{1.5em}Logika pengambilan keputusan untuk mengontrol aktuator dipetakan ke dalam array 2D konstan yang disimpan di memori FLASH:
@@ -499,7 +497,7 @@ u_k = \mathbf{M}[S_k][M_k]
 % ═════════════════════════════════════════════════════════════
 \section{Simulasi dan Hasil}
 \subsection{Alat dan Perangkat Lunak}
-\hspace{1.5em}To memvalidasi metode baru yang diusulkan, sebuah platform simulasi terpadu dibangun menggunakan spesifikasi berikut:
+\hspace{1.5em}Untuk memvalidasi metode baru yang diusulkan, sebuah platform simulasi terpadu dibangun menggunakan spesifikasi berikut:
 \begin{itemize}
     \item \textbf{Simulator Perangkat Keras:} Proteus Professional 8.17 (mensimulasikan sirkuit pada tingkat gerbang logika dan transistor secara interaktif).
     \item \textbf{IDE Firmware:} Keil $\mu$Vision v5.38 dengan opsi compiler \textbf{ARM Compiler 6 (AC6)} untuk optimasi memori dan eksekusi instruksi Cortex-M4.
@@ -512,10 +510,10 @@ u_k = \mathbf{M}[S_k][M_k]
 \hspace{1.5em}Skema rangkaian elektronika dirancang secara presisi pada simulator Proteus seperti yang ditunjukkan pada Gambar \ref{fig:skema_proteus}. Detail integrasi pengabelan pin-ke-pin diatur sebagai berikut:
 \begin{enumerate}
     \item \textbf{Mikrokontroler (U1):} Komponen utama menggunakan model IC STM32F401CD. Pin suplai referensi internal ditenagai secara stabil dengan menghubungkan pin \texttt{VREF+} (pin 9) ke jalur tegangan positif 3.3~V dan pin \texttt{VSSA/VREF-} (pin 8) langsung terikat pada Ground (GND).
-    \item \textbf{Input Sensor (RV1 \& RV2):} Menggunakan dua buah potensiometer linier $1\text{~k}\Omega$ sebagai simulator parameter fisik fisis. Wiper (panah tengah) komponen RV1 dihubungkan ke pin \texttt{PA0} (ADC1\_IN0) sebagai sensor kritis, sedangkan wiper RV2 dihubungkan ke pin \texttt{PA1} (ADC1\_IN1) sebagai sensor regular. Kaki atas kedua komponen dihubungkan ke suplai 3.3~V dan kaki bawah ke Ground.
+    \item \textbf{Input Sensor (LM35):} Menggunakan sebuah sensor suhu LM35 sebagai pengukur parameter fisis suhu lingkungan. Pin VOUT dari sensor LM35 dihubungkan langsung ke pin \texttt{PA1} (ADC1\_IN1) pada mikrokontroler STM32F401 untuk dikonversi menjadi data digital 12-bit (resolusi ADC $=$ 3.3V/4096 $\approx$ 0.806~mV/LSB). Kaki VCC dihubungkan ke suplai 3.3~V dan kaki GND dihubungkan ke Ground.
     \item \textbf{LED Indikator (D1 \& D2):} LED berwarna merah (\texttt{D1 / LED-RED}) dikonfigurasi sebagai alarm visual kondisi bahaya dan terhubung ke pin \texttt{PB0}. LED berwarna hijau (\texttt{D2 / LED-GREEN}) dihubungkan ke pin \texttt{PB1} sebagai penanda status operasi aman. Katode dari kedua komponen LED disatukan menuju Ground.
     \item \textbf{Aktuator Darurat dan Driver Transistor (Q1, RL1, D3, BUZ1):} Jalur output digital pin \texttt{PB8} dihubungkan langsung ke kaki basis transistor NPN BC547 (\texttt{Q1}). Kolektor transistor bertindak sebagai driver \textit{active-high} untuk mengaktifkan koil kumparan Relay bertegangan kerja 12V (\texttt{RL1}), yang diproteksi secara paralel oleh dioda \textit{flyback} 1N4007 (\texttt{D3}) menuju rel daya VCC. Kontak sakelar \textit{Normally Open} (NO) pada relay dipasang seri dengan baterai 12~V (\texttt{BAT1}) untuk mengaktifkan alarm klakson/buzzer darurat (\texttt{BUZ1}).
-    \item \textbf{Komunikasi Serial (Virtual Terminal):} Untuk debugging telemetri, jalur serial asinkron mikrokontroler menggunakan pin \texttt{PA2} (USART2\_TX) yang dihubungkan ke pin \text{RXD} pada Virtual Terminal, dan pin \texttt{PA3} (USART2\_RX) dihubungkan ke pin \text{TXD} pada Virtual Terminal dengan kecepatan baudrate standar 9600~bps.
+    \item \textbf{Komunikasi Serial (Virtual Terminal):} Untuk debugging telemetri, jalur serial asinkron mikrokontroler menggunakan pin \texttt{PA9} (USART1\_TX) yang dihubungkan ke pin \text{RXD} pada Virtual Terminal, dan pin \texttt{PA10} (USART1\_RX) dihubungkan ke pin \text{TXD} pada Virtual Terminal dengan kecepatan baudrate standar 9600~bps.
 \end{enumerate}
 
 \begin{figure}[htbp]
@@ -550,15 +548,15 @@ Data mentah telemetri simulasi tersebut diekspor dalam format CSV (\texttt{data.
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=0.92\textwidth]{dmcm_ieee.png}
-\caption{Visualisasi Data Hasil Simulasi DMCM-WVAF Menggunakan GNUPlot. Panel (a) ADC Raw vs WVAF Filtered; Panel (b) Window Size ($N_{\text{win}}$) dan Impuls Perubahan Absolut ($|\Delta V|$); Panel (c) Criticality Level / System State ($S_k$); Panel (d) Sinyal Kontrol Aktuator digital (Green LED, Red LED, Relay).}\label{fig:dmcm_ieee}
+\caption{Visualisasi Data Hasil Simulasi DMCM-WVAF Menggunakan GNUPlot. Panel (a) Raw Temperature vs WVAF Filtered Temperature; Panel (b) Window Size ($N_{\text{win}}$) dan Impuls Perubahan Absolut ($|\Delta T|$); Panel (c) Criticality Level / System State ($S_k$); Panel (d) Sinyal Kontrol Aktuator digital (Green LED, Red LED, Relay).}\label{fig:dmcm_ieee}
 \end{figure}
 
 Grafik Gambar \ref{fig:dmcm_ieee} menunjukkan dinamika sistem selama pengujian interaktif:
 \begin{itemize}
-    \item \textbf{Panel (a):} Sinyal merah tipis menyatakan data mentah $V_{\text{raw}}$ yang tercemar noise kuantisasi dan induksi acak. Sinyal biru menyatakan hasil filter adaptif $V_{\text{flt}}$ (WVAF). Garis putus-putus menyatakan ambang batas status $T_{\text{warn}} = 1365$ dan $T_{\text{crit}} = 2730$. Terlihat $V_{\text{flt}}$ menyaring noise dengan sangat mulus saat stabil, namun secara instan mampu mengikuti perubahan ekstrem sinyal raw tanpa \textit{lag} fasa.
-    \item \textbf{Panel (b):} Sinyal oranye menyatakan ukuran jendela filter $N_{\text{win}}$ dan sinyal impuls abu-abu menyatakan nilai absolut $|\Delta V|$. Terlihat jelas bahwa begitu terjadi lonjakan tajam $|\Delta V| > 200$, ukuran jendela seketika menyusut dari 16 ke 2. Setelah lonjakan berakhir dan $|\Delta V| \le 200$, jendela filter melebar kembali ke 16 secara instan.
-    \item \textbf{Panel (c):} Level kritis sistem $S_k$ beralih secara deterministik dari Normal (0) $\to$ Warning (1) $\to$ Danger (2) berdasarkan level sinyal tersaring $V_{\text{flt}}$ yang melewati batas-batas ambang tegangan.
-    \item \textbf{Panel (d):} Sinyal digital aktuator mengonfirmasi kepatuhan terhadap matriks keputusan: status NORMAL ($S=0$) mengaktifkan Green LED, status WARNING ($S=1$) mengaktifkan Red LED, dan status DANGER ($S=2$) mengaktifkan Red LED sekaligus memicu kondisi saturasi pada transistor Q1 untuk menutup sakelar Relay dan membunyikan komponen klakson buzzer darurat BUZ1.
+    \item \textbf{Panel (a):} Sinyal merah tipis menyatakan data suhu mentah $T_{\text{raw}}$ yang tercemar noise pembacaan sensor LM35. Sinyal biru menyatakan hasil filter adaptif $T_{\text{ft}}$ (WVAF). Garis putus-putus menyatakan ambang batas status $T_{\text{warn}} = 30^\circ\text{C}$ dan $T_{\text{crit}} = 40^\circ\text{C}$. Terlihat $T_{\text{ft}}$ menyaring noise dengan sangat mulus saat stabil, namun secara instan mampu mengikuti perubahan ekstrem sinyal raw tanpa \textit{lag} fasa.
+    \item \textbf{Panel (b):} Sinyal oranye menyatakan ukuran jendela filter $N_{\text{win}}$ dan sinyal impuls abu-abu menyatakan nilai absolut $|\Delta k|$ (perubahan ADC). Terlihat jelas bahwa begitu terjadi lonjakan tajam $|\Delta k| > 200$~ADC counts, ukuran jendela seketika menyusut dari $W_{\max}=16$ ke $W_{\min}=2$. Setelah lonjakan berakhir dan $|\Delta k| \le 200$~ADC counts, jendela filter melebar kembali ke 16 secara instan.
+    \item \textbf{Panel (c):} Level kritis sistem $S_k$ beralih secara deterministik dari Normal (0) $\to$ Warning (1) $\to$ Danger (2) berdasarkan level suhu tersaring $T_{\text{ft}}$ yang melewati batas-batas ambang suhu.
+    \item \textbf{Panel (d):} Sinyal digital aktuator mengonfirmasi kepatuhan terhadap matriks keputusan: status NORMAL ($S=0$) mengaktifkan Green LED, status WARNING ($S=1$) mengaktifkan Red LED, dan status DANGER ($S=2$) mengaktifkan Red LED sekaligus memicu kondisi saturasi pada transistor Q1 untuk menutup sakelar Relay.
 \end{itemize}
 
 \subsection{Analisis Distribusi Profil Energi Sistem}
@@ -573,7 +571,7 @@ Grafik Gambar \ref{fig:dmcm_ieee} menunjukkan dinamika sistem selama pengujian i
 \hspace{1.5em}Berdasarkan plot Gambar \ref{fig:energy_profile}, sumbu vertikal menyatakan magnitudo konsumsi energi ($Z$), sedangkan sumbu matriks bidang menyatakan koordinat spasial pemrosesan data ($X, Y$). Fenomena dinamis yang dapat diamati adalah sebagai berikut:
 \begin{itemize}
     \item \textbf{Area Steady-State (Lembah Hijau-Biru):} Ketika sistem berada pada kondisi NORMAL dengan ukuran jendela maksimal $W_k = 16$, grafik menunjukkan tingkat konsumsi energi yang sangat rendah dan konstan ($\approx 1.2\,\mu\text{W}$). Hal ini membuktikan bahwa optimasi bare-metal C/C++ mampu mereduksi aktivitas switching clock internal secara masif.
-    \item \textbf{Area Transien Eksperimental (Puncak Kuning-Merah):} Begitu terjadi lonjakan transien tajam ($\Delta V_k > \theta$), terjadi eskalasi pemrosesan pada pilar penanganan interupsi TIM2 dan pemetaan State-Matrix. Konsumsi energi melonjak membentuk puncak tertinggi ($\approx 4.8\,\mu\text{W}$) secara terlokalisasi. 
+    \item \textbf{Area Transien Eksperimental (Puncak Kuning-Merah):} Begitu terjadi lonjakan transien tajam ($\Delta T_k > \theta$), terjadi eskalasi pemrosesan pada pilar penanganan interupsi TIM2 dan pemetaan State-Matrix. Konsumsi energi melonjak membentuk puncak tertinggi ($\approx 4.8\,\mu\text{W}$) secara terlokalisasi. 
 \end{itemize}
 \hspace{1.5em}Meskipun terjadi lonjakan daya saat kondisi darurat, durasi transien yang sangat singkat ($\approx 180\,\mu\text{s}$) menyebabkan total disipasi energi kumulatif tetap berada di bawah ambang batas termal chip, menjamin keandalan fungsional *Safety-Critical IoT Sensor Nodes* tanpa risiko overheat.
 
@@ -584,7 +582,7 @@ Grafik Gambar \ref{fig:dmcm_ieee} menunjukkan dinamika sistem selama pengujian i
 \hspace{1.5em}Berdasarkan hasil simulasi dan visualisasi data grafis (Gambar \ref{fig:dmcm_ieee}), perilaku filter WVAF dapat dianalisis secara matematis and arsitektural untuk membuktikan performanya.
 
 \subsection{Analisis Matematis Efisiensi Mereduksi Noise}
-\hspace{1.5em}Pada kondisi mantap (\textit{steady-state}), ketika laju perubahan sensor berada di bawah ambang batas ($|\Delta V| \le 200$), filter WVAF menerapkan ukuran jendela maksimal $W_k = 16$. Bila diasumsikan noise pada sinyal ADC berupa derau putih acak (\textit{Additive White Gaussian Noise} / AWGN) dengan variansi $\sigma^2$, maka Moving Average dengan jendela $W_k$ akan menekan variansi derau tersaring menjadi:
+\hspace{1.5em}Pada kondisi mantap (\textit{steady-state}), ketika laju perubahan nilai ADC berada di bawah ambang batas ($|\Delta k| \le 200$ ADC counts), filter WVAF menerapkan ukuran jendela maksimal $W_k = 16$. Bila diasumsikan noise pada sinyal ADC berupa derau putih acak (\textit{Additive White Gaussian Noise} / AWGN) dengan variansi $\sigma^2$, maka Moving Average dengan jendela $W_k$ akan menekan variansi derau tersaring menjadi:
 \begin{equation}
 \sigma_{\text{filtered}}^2 = \frac{\sigma^2}{W_k}
 \end{equation}
@@ -603,9 +601,9 @@ Dengan periode sampling TIM2 sebesar 5~ms, total latensi respon terhadap perubah
 \begin{equation}
 t_{\text{latency, fixed}} = 7.5 \times 5\,\text{ms} = 37.5\,\text{ms}
 \end{equation}
-Penundaan sebesar 37.5~ms ini sangat berbahaya pada sistem keselamatan kritis karena keterlambatan pemutusan daya atau alarm dapat akibat kerusakan sistem secara katastropik.
+Penundaan sebesar 37.5~ms ini sangat berbahaya pada sistem keselamatan kritis karena keterlambatan pemutusan daya atau alarm dapat menyebabkan kerusakan sistem secara katastropik.
 
-Metode WVAF mengatasi kendala ini secara elegan. Ketika terjadi lonjakan transien yang ditandai oleh $|\Delta V| > 200$, ukuran jendela seketika menyusut menjadi $W_k = 2$. Penundaan kelompok filter pada kondisi transien ini menjadi:
+Metode WVAF mengatasi kendala ini secara elegan. Ketika terjadi lonjakan transien yang ditandai oleh $|\Delta T| > 3^\circ\text{C}$, ukuran jendela seketika menyusut menjadi $W_k = 2$. Penundaan kelompok filter pada kondisi transien ini menjadi:
 \begin{equation}
 \tau_{\text{wvaf}} = \frac{2 - 1}{2} = 0.5 \text{ periode sampling}
 \end{equation}
@@ -613,7 +611,7 @@ Sehingga total latensi respon terhadap kondisi darurat terpangkas menjadi hanya:
 \begin{equation}
 t_{\text{latency, wvaf}} = 0.5 \times 5\,\text{ms} = 2.5\,\text{ms}
 \end{equation}
-\hspace{1.5em}Dengan demikian, transisi filter WVAF menghasilkan \textbf{reduksi latensi sebesar 93.3\%} dibandingkan filter moving average konvensional. Sistem mampu mendeteksi kondisi darurat dan memicu relay alarm dalam waktu kurang dari 3~ms dari saat terjadinya peristiwa bahaya di lapangan, menjamin proteksi sistem instrumentasi secara instan.
+\hspace{1.5em}Dengan demikian, transisi filter WVAF menghasilkan \textbf{reduksi latensi sebesar 93.3\%} dibandingkan filter moving average konvensional dengan jendela tetap $W=16$. Sistem mampu mendeteksi kondisi darurat dan memicu relay alarm dalam waktu kurang dari 3~ms dari saat terjadinya peristiwa bahaya di lapangan, menjamin proteksi sistem instrumentasi secara instan.
 
 \subsection{Analisis Waktu Nyata dan Determinisme Algoritma}
 \hspace{1.5em}Partisi temporal SBTP memastikan seluruh alur pemrosesan ini diselesaikan dengan determinisme waktu yang sangat ketat. Di dalam \texttt{"HAL\_TIM\_PeriodElapsedCallback()"} TIM2, waktu yang diperlukan untuk mengeksekusi inisiasi ADC, komputasi WVAF, evaluasi status, array lookup $O(1)$, dan manipulasi pin GPIO diuji menggunakan instrumen \textit{Oscilloscope} digital di Proteus. Hasil pengujian menunjukkan bahwa total waktu aktif core CPU (\textit{execution time} / $\tau_{exe}$) untuk memproses Zona Kritis ini hanya membutuhkan waktu sebesar $\approx 180\,\mu\text{s}$. Dengan periode interupsi $T = 5\,\text{ms}$ ($5000\,\mu\text{s}$), beban utilisasi pemrosesan Zona Kritis terhadap core CPU sangat rendah, yaitu:
@@ -630,9 +628,9 @@ Operasi lookup \texttt{state\_matrix[state][mode]} diterjemahkan oleh compiler A
 \section{Keunggulan Metode}
 \hspace{1.5em}Berdasarkan metode yang diusulkan pada penelitian sebelumnya, dapat dilakukan perbandingan dengan metode kendali sistem instrumentasi dan penyaringan sensor konvensional. Hasil analisis menunjukkan bahwa metode DMCM-WVAF memberikan berbagai keunggulan yang signifikan:
 \begin{itemize}
-    \item \textbf{Penyaringan Sinyal Cerdas (WVAF):} Mampu menekan noise acak hingga 75\% pada kondisi normal namun secara otomatis menghilangkan penundaan filter (\textit{phase lag}) hingga 93\% saat transisi mendadak.
+    \item \textbf{Penyaringan Sinyal Cerdas (WVAF):} Mampu menekan noise acak hingga 75\% (12~dB) pada kondisi normal dengan jendela $W_{\max}=16$, namun secara otomatis menghilangkan penundaan filter (\textit{phase lag}) hingga 93.3\% saat transisi mendadak dengan jendela $W_{\min}=2$.
     \item \textbf{Determinisme Real-Time Sejati ($O(1)$):} Mengganti logika percabangan bersarang yang berat dengan lookup array 2D konstan berkecepatan tinggi, memotong \textit{jitter} komputasi aktuator hingga nol absolut.
-    \item \textbf{Partisi Temporal yang Tangguh (SBTP):} Mengisolasi fungsi kritis dari kegagalan fungsional perangkat lunak di background loop tanpa memerlukan beban komputasi RTOS komersial.
+    \item \textbf{Partisi Temporal yang Tangguh (SBTP):} Mengisolasi fungsi kritis (akuisisi ADC, filter WVAF, evaluasi state, aktuasi GPIO, dan telemetri USART1) dari kegagalan fungsional perangkat lunak di background loop tanpa memerlukan beban komputasi RTOS komersial.
     \item \textbf{Refleksi Memori \& Daya yang Superior (Bare-metal):} Karena diimplementasikan langsung pada register perangkat keras tanpa perantara kernel OS, firmware ini sangat ramah sumber daya ($< 2$\,KB FLASH dan $< 1$\,KB RAM), jadikan solusi ideal bagi mikrokontroler berharga murah dan berdaya sangat rendah (\textit{Ultra-Low Power}).
 \end{itemize}
 
@@ -644,9 +642,9 @@ Operasi lookup \texttt{state\_matrix[state][mode]} diterjemahkan oleh compiler A
 \hline
 \textbf{Parameter Evaluasi} & \textbf{Metode Konvensional} & \textbf{DMCM-WVAF} \\ \hline
 Penyaringan Sensor & Fixed-Window Moving Average & Variable-Window Adaptive (WVAF) \\ \hline
-Latensi Keadaan Darurat & Tinggi ($\sim 37.5$\,ms) & Sangat Rendah ($\sim 2.5$\,ms) \\ \hline
-Reduksi Noise Stabil & Rendah (jika jendela diperkecil) & Sangat Tinggi (75\% / 12\,dB) \\ \hline
-Partisi Tugas & Tidak ada / RTOS Pihak Ketiga & Temporal Partitioning (SBTP) \\ \hline
+Latensi Keadaan Darurat & Tinggi ($\sim 37.5$\,ms, $W=16$ tetap) & Sangat Rendah ($\sim 2.5$\,ms, $W_{\min}=2$) \\ \hline
+Reduksi Noise Stabil & Rendah (jika jendela diperkecil) & Sangat Tinggi (75\% / 12\,dB, $W_{\max}=16$) \\ \hline
+Partisi Tugas & Tidak ada / RTOS Pihak Ketiga & Temporal Partitioning (SBTP, TIM2 ISR 5~ms) \\ \hline
 Kompleksitas Logika & $O(n)$ (if-else bersarang) & $O(1)$ (State-Matrix Lookup) \\ \hline
 Timing Jitter & Tinggi & Nol \\ \hline
 Overhead RAM/FLASH & Tinggi & Sangat Rendah ($< 1$\,KB RAM, $< 2$\,KB FLASH) \\ \hline
@@ -663,16 +661,17 @@ Ketahanan thd Hang & Rentan (jika loop utama macet) & Terjamin Aman via Hardware
 
     \item \textbf{Tautan Repositori GitHub:}
     \begin{itemize}
-        \item \href{https://github.com/DanielKivlhan/dmcm-wvaf-stm32.git}
-        {https://github.com/DanielKivlhan/dmcm-wvaf-stm32.git}
+        \item \href{https://github.com/DanielKivlhan/DMCM-WVAF-STM32}
+        {https://github.com/DanielKivlhan/DMCM-WVAF-STM32}
     \end{itemize}
 
     \item \textbf{Tautan Unggahan Publikasi LinkedIn:}
     \begin{itemize}
-        \item \href{https://www.linkedin.com/posts/danielkivlhan_dmcmwvaf-adaptivefiltering-mixedcriticality-ugcPost-7464021198536921088-8Qes/?utm_source=share&utm_medium=member_desktop&rcm=ACoAAFF9a-YBasN1Clh7qizRCV4FBqfJXxj9OPk}
-    {https://www.linkedin.com/in/danielkivlhankatoroy}
+        \item \href{https://www.linkedin.com/in/daniel-kivlhan-katoroy}
+        {https://www.linkedin.com/in/daniel-kivlhan-katoroy}
 
-        \item \href{https://www.linkedin.com/posts/faris-ahmad-holili_dmcmwvaf-adaptivefiltering-mixedcriticality-activity-7463996468186603520-husf}{https://www.linkedin.com/in/farisahmadholili}
+        \item \href{https://www.linkedin.com/in/faris-ahmad-holili}
+        {https://www.linkedin.com/in/faris-ahmad-holili}
     \end{itemize}
 
 \end{itemize}
@@ -685,8 +684,8 @@ Ketahanan thd Hang & Rentan (jika loop utama macet) & Terjamin Aman via Hardware
 \begin{enumerate}
     \item Studi literatur terhadap 16 jurnal terindeks Scopus/WoS (2021--2026) menunjukkan tren dominan pada efisiensi daya komputasi sistem tertanam, perancangan penjadwal RTOS adaptif, serta penguatan keamanan \textit{bare-metal} pada node ujung sensor IoT.
     \item Metode baru \textbf{DMCM-WVAF} yang diusulkan berhasil menggabungkan penyaringan dinamis (\textit{Variable-Window Adaptive Filtering}), isolasi tugas (\textit{Software-Based Temporal Partitioning}), and keputusan deterministik (\textit{Constant-Time State-Matrix Mapping}) dalam satu kesatuan sistem instrumentasi bare-metal yang sangat efisien.
-    \item Hasil simulasi interaktif di Proteus 8.17 menggunakan mikrokontroler STM32F401CD membuktikan keberhasilan algoritma secara visual: ukuran jendela filter menyusut otomatis dari 16 ke 2 saat transien darurat terjadi, memangkas latensi deteksi bahaya dari 37.5~ms menjadi hanya 2.5~ms (reduksi latensi sebesar 93.3\%).
-    \item Desain array 2D konstan $O(1)$ State-Matrix terbukti menjamin eksekusi perintah aktuator (LED merah/hijau dan relay alarm) secara deterministik tanpa jitter, menjadikannya standar keamanan berkinerja tinggi yang sangat layak diimplementasikan secara luas pada sistem instrumentasi IoT keselamatan-kritis (\textit{Safety-Critical IoT Sensor Nodes}).
+    \item Hasil simulasi interaktif di Proteus 8.17 menggunakan mikrokontroler STM32F401CD membuktikan keberhasilan algoritma secara visual: ukuran jendela filter menyusut otomatis dari $W_{\max}=16$ ke $W_{\min}=2$ saat transien ADC melebihi \texttt{DELTA\_THRESH=200} counts, memangkas latensi deteksi bahaya dari 37.5~ms menjadi hanya 2.5~ms (reduksi latensi sebesar 93.3\%). Telemetri dikirimkan melalui USART1 (PA9~TX) ke Virtual Terminal.
+    \item Desain array 2D konstan $O(1)$ State-Matrix terbukti menjamin eksekusi perintah aktuator (LED merah/hijau pada PB0/PB1 dan relay alarm pada PB8) secara deterministik tanpa jitter, menjadikannya standar keamanan berkinerja tinggi yang sangat layak diimplementasikan secara luas pada sistem instrumentasi IoT keselamatan-kritis (\textit{Safety-Critical IoT Sensor Nodes}).
 \end{enumerate}
 
 \newpage
@@ -706,6 +705,7 @@ Ketahanan thd Hang & Rentan (jika loop utama macet) & Terjamin Aman via Hardware
 \bibitem{lozano2023} S.~Lozano, T.~Lugo, and J.~Carretero, ``A Comprehensive Survey on the Use of Hypervisors in Safety-Critical Systems,'' 2023.
 \bibitem{gupta2025} N.~Gupta, G.~Banda, N.~Hubballi, and K.~V.~Srinivas, ``A Hard Real-Time Kernel for CPIoT Systems With Safety Features in Rust,'' 2025.
 \bibitem{anshul2024} A.~Anshul and A.~Sengupta, ``A Survey of High Level Synthesis Based Hardware Security Approaches for Reusable IP Cores,'' 2024.
+\text{ }\\ \newpage
 \bibitem{tang2022} X.~Tang, J.~Liu, Y.~Shen, S.~Li, L.~Shen, A.~Sanyal, K.~Ragab, and N.~Sun, ``Low-Power SAR ADC Design: Overview and Survey of State-of-the-Art Techniques,'' 2022.
 \bibitem{pop2022} A.~A.~Pop, ``Incremental Encoder Speed Acquisition Using an STM32 Microcontroller and NI ELVIS,'' 2022.
 \bibitem{roatort2025} K.~Roa-Tort, dkk., ``FPGA–STM32-Embedded Vision and Control Platform for ADAS Development on a 1:5 Scale Vehicle,'' 2025.
